@@ -1,3 +1,0 @@
-// PCH for Runtime/Engine/Public/EngineSharedPCH.h
-#include "C:/Team3Project/Team03/Intermediate/Build/Win64/x64/Team03Editor/Development/Engine/SharedDefinitions.Engine.Project.ValApi.Cpp20.h"
-#include "Runtime/Engine/Public/EngineSharedPCH.h"
