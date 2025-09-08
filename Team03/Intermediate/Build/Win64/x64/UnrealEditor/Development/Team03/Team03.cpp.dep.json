@@ -1,0 +1,14 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\team3project\\team03\\source\\team03\\team03.cpp",
+        "ProvidedModule": "",
+        "PCH": "c:\\team3project\\team03\\intermediate\\build\\win64\\x64\\team03editor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.h.pch",
+        "Includes": [
+            "c:\\team3project\\team03\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\team03\\definitions.team03.h",
+            "c:\\team3project\\team03\\source\\team03\\team03.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

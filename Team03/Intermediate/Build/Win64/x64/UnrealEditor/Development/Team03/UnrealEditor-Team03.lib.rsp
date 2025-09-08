@@ -1,0 +1,13 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-Team03.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"C:\Team3Project\Team03\Intermediate\Build\Win64\x64\Team03Editor\Development\UnrealEd\SharedPCH.UnrealEd.Project.ValApi.Cpp20.h.obj"
+"C:\Team3Project\Team03\Intermediate\Build\Win64\x64\UnrealEditor\Development\Team03\Team03.cpp.obj"
+"C:\Team3Project\Team03\Intermediate\Build\Win64\x64\UnrealEditor\Development\Team03\PerModuleInline.gen.cpp.obj"
+"C:\Team3Project\Team03\Intermediate\Build\Win64\x64\UnrealEditor\Development\Team03\Default.rc2.res"
+/OUT:"C:\Team3Project\Team03\Intermediate\Build\Win64\x64\UnrealEditor\Development\Team03\UnrealEditor-Team03.lib"
