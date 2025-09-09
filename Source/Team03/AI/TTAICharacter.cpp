@@ -1,9 +1,12 @@
 #include "AI/TTAICharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "TTAIController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ATTAICharacter::ATTAICharacter()
 {
+	GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+
 	SetReplicates(true);
 	SetReplicateMovement(true);
 
