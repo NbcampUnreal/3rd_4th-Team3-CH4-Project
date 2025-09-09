@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "TTAICharacter.generated.h"
 
+class UAnimMontage;
+
 UCLASS()
 class TEAM03_API ATTAICharacter : public ACharacter
 {
@@ -24,6 +26,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
 	bool bIsDead;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	UAnimMontage* DeathMontage;
+
 	UFUNCTION()
 	void OnRep_IsDead();
+
+	//g
 };

@@ -20,14 +20,17 @@ void ATTAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(
-		RandomMoveTimer,
-		this,
-		&ATTAIController::MoveToRandomLocation,
-		5.0f,
-		true,
-		1.0f
-	);
+	if (HasAuthority())
+	{
+		GetWorldTimerManager().SetTimer(
+			RandomMoveTimer,
+			this,
+			&ATTAIController::MoveToRandomLocation,
+			5.0f,
+			true,
+			1.0f
+		);
+	}
 }
 
 void ATTAIController::MoveToRandomLocation()

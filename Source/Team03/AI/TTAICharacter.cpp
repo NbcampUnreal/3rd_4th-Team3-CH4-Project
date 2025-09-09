@@ -1,6 +1,8 @@
 #include "AI/TTAICharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "TTAIController.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATTAICharacter::ATTAICharacter()
@@ -31,7 +33,16 @@ void ATTAICharacter::BeginPlay()
 
 void ATTAICharacter::OnRep_IsDead()
 {
-	//죽음 몽타주
+	if (bIsDead)
+	{
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+		{
+			if (DeathMontage)
+			{
+				AnimInstance->Montage_Play(DeathMontage, 1.0f);
+			}
+		}
+	}
 }
 
 float ATTAICharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -49,6 +60,8 @@ void ATTAICharacter::Die()
 	if (bIsDead) return;
 
 	bIsDead = true;
+
+	OnRep_IsDead();
 
 	SetLifeSpan(5.0f);
 }
