@@ -14,5 +14,14 @@ public:
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void BeginPlay() override;
+
+private:
+	void MoveToRandomLocation();
+
+	FTimerHandle RandomMoveTimer;
+
+	UPROPERTY(EditAnywhere, Category = "AI")
+	float MoveRadius;
 	
 };
