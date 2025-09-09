@@ -3,7 +3,7 @@
 
 ATTAIController::ATTAIController()
 {
-	MoveRadius = 1000.0f;
+	MoveRadius = 1500.0f;
 }
 
 void ATTAIController::OnPossess(APawn* InPawn)

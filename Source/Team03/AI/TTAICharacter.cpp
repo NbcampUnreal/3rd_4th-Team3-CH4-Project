@@ -26,17 +26,25 @@ void ATTAICharacter::BeginPlay()
 
 }
 
+void ATTAICharacter::OnRep_IsDead()
+{
+	//죽음 몽타주
+}
+
 float ATTAICharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (HasAuthority() == false) return 0.0f;
 
 	Die();
 
-	return 0.0f;
+	return DamageAmount;
 }
 
 void ATTAICharacter::Die()
 {
+	if (!HasAuthority()) return;
+	if (bIsDead) return;
+
 	bIsDead = true;
 
 	SetLifeSpan(5.0f);

@@ -18,13 +18,12 @@ public:
 
 	void Die();
 
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
-	bool bIsDead;
-
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
+	bool bIsDead;
 
-
+	UFUNCTION()
+	void OnRep_IsDead();
 };
