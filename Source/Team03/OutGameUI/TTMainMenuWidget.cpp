@@ -2,6 +2,8 @@
 
 
 #include "TTMainMenuWidget.h"
+
+#include "OutGameUI/TTUI_PlayerController.h" 
 #include "Components/Button.h"
 
 void UTTMainMenuWidget::NativeConstruct()
@@ -28,7 +30,12 @@ void UTTMainMenuWidget::NativeConstruct()
 // 지금은 로그만 출력하도록 설정 각 버튼에 맞는 기능 구현 필요
 void UTTMainMenuWidget::OnStartButtonClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Start Button Clicked!"));
+    ATTUI_PlayerController* UI_PlayerController = Cast<ATTUI_PlayerController>(GetOwningPlayer());
+    if (UI_PlayerController)
+    {
+        // 컨트롤러에게 로비 UI를 보여달라고 요청
+        UI_PlayerController->ShowLobbyUI();
+    }
 }
 
 void UTTMainMenuWidget::OnOptionButtonClicked()

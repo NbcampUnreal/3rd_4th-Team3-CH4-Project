@@ -19,6 +19,7 @@ protected:
 	virtual void NativeConstruct() override;
 
 private:
+    // 블루프린트의 버튼 위젯과 연결될 변수들
     UPROPERTY(meta = (BindWidget))
     UButton* StartButton;
 
