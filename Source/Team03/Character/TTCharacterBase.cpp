@@ -8,20 +8,29 @@
 #include "EnhancedInputSubsystems.h"
 #include "Input/TTBaseCharacterInput.h"
 
-ATTCharacterBase::ATTCharacterBase():
-	BaseWalkSpeed(300),
-	BaseSprintSpeed(600)
+ATTCharacterBase::ATTCharacterBase()
 {
+	BaseWalkSpeed = 300;
+	BaseSprintSpeed = 600;
+
 	PrimaryActorTick.bCanEverTick = false;
+
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
+
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 
 	SprintArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArm"));
 	SprintArmComp->SetupAttachment(RootComponent);
+	SprintArmComp->bUsePawnControlRotation = true;
 	SprintArmComp->TargetArmLength = 400.0f;
 
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SprintArmComp);
-
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	CameraComp->bUsePawnControlRotation = false;
 }
 
 void ATTCharacterBase::BeginPlay()
@@ -48,7 +57,7 @@ void ATTCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if(IsValid(EnhancedInputComp))
 	{
 		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Move, ETriggerEvent::Triggered, this, &ThisClass::Move);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Jump, ETriggerEvent::Started, this, &ThisClass::StartJump);
+		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Jump, ETriggerEvent::Triggered, this, &ThisClass::StartJump);
 		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Jump, ETriggerEvent::Completed, this, &ThisClass::StopJump);
 		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Sprint, ETriggerEvent::Triggered, this, &ThisClass::StartSprint);
 		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Sprint, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
@@ -58,10 +67,16 @@ void ATTCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void ATTCharacterBase::Move(const FInputActionValue& Value)
 {
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D InMovementVector = Value.Get<FVector2D>();
 
-	AddMovementInput(GetActorForwardVector(), MovementVector.X);
-	AddMovementInput(GetActorRightVector(), MovementVector.Y);
+	const FRotator ControlRotation = Controller->GetControlRotation();
+	const FRotator ControlYawRotation(0.0f, ControlRotation.Yaw, 0.0f);
+
+	const FVector ForwardDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(ControlYawRotation).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(ForwardDirection, InMovementVector.X);
+	AddMovementInput(RightDirection, InMovementVector.Y);
 }
 
 void ATTCharacterBase::StartJump(const FInputActionValue& Value)
