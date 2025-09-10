@@ -4,16 +4,70 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "InputActionValue.h"
 #include "TTCharacterBase.generated.h"
+
+class UCameraComponent;
+class USpringArmComponent;
+class UTTBaseCharacterInput;
+class UInputMappingContext;
 
 UCLASS()
 class TEAM03_API ATTCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
+#pragma region ACharacter
+
 public:
 	ATTCharacterBase();
 
+	virtual void BeginPlay() override;
+
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+	USpringArmComponent* SprintArmComp;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
+	UCameraComponent* CameraComp;
+
+#pragma endregion
+
+#pragma region Input
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UTTBaseCharacterInput> PlayerBaseCharacterInputConfig;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UInputMappingContext> PlayerCharacterInputMappingContext;
+
+private:
+	UFUNCTION()
+	void Move(const FInputActionValue& Value);
+	UFUNCTION()
+	void StartJump(const FInputActionValue& Value);
+	UFUNCTION()
+	void StopJump(const FInputActionValue& Value);
+	UFUNCTION()
+	void Look(const FInputActionValue& Value);
+	UFUNCTION()
+	void StartSprint(const FInputActionValue& Value);
+	UFUNCTION()
+	void StopSprint(const FInputActionValue& Value);
+
+	void UpdateSpeed();
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float BaseWalkSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
+	float BaseSprintSpeed;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	float CurrentSpeedMultiplier;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	bool bIsSprinting;
+
+#pragma endregion
 };
