@@ -5,6 +5,7 @@
 
 #include "OutGameUI/TTUI_PlayerController.h" 
 #include "Components/Button.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UTTMainMenuWidget::NativeConstruct()
 {
@@ -45,5 +46,8 @@ void UTTMainMenuWidget::OnOptionButtonClicked()
 
 void UTTMainMenuWidget::OnExitButtonClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Exit Button Clicked!"));
+    APlayerController* PlayerController = GetOwningPlayer();
+    
+    // QuitGame 함수를 호출하여 게임을 종료
+    UKismetSystemLibrary::QuitGame(GetWorld(), PlayerController, EQuitPreference::Quit, true);
 }
