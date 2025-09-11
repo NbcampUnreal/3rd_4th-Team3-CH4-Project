@@ -4,8 +4,9 @@
 #include "TTMainMenuWidget.h"
 
 #include "OutGameUI/TTUI_PlayerController.h" 
+#include "OutGameUI/TTGameInstance.h"
 #include "Components/Button.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 void UTTMainMenuWidget::NativeConstruct()
 {
@@ -46,8 +47,11 @@ void UTTMainMenuWidget::OnOptionButtonClicked()
 
 void UTTMainMenuWidget::OnExitButtonClicked()
 {
-    APlayerController* PlayerController = GetOwningPlayer();
-    
-    // QuitGame 함수를 호출하여 게임을 종료
-    UKismetSystemLibrary::QuitGame(GetWorld(), PlayerController, EQuitPreference::Quit, true);
+
+    UTTGameInstance* GameInstance = Cast<UTTGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+    if (GameInstance)
+    {
+        // GameInstance에게 정리 및 종료를 요청합니다.
+        GameInstance->CleanupAndExit();
+    }
 }

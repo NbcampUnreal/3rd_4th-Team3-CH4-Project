@@ -4,7 +4,9 @@
 #include "OutGameUI/TTLobbyWidget.h"
 
 #include "OutGameUI/TTUI_PlayerController.h"
+#include "OutGameUI/TTGameInstance.h"
 #include "Components/Button.h"
+#include "Kismet/GameplayStatics.h"
 
 void UTTLobbyWidget::NativeConstruct()
 {
@@ -32,7 +34,12 @@ void UTTLobbyWidget::OnRefreshButtonClicked()
 
 void UTTLobbyWidget::OnCreateRoomButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Create Room Button Clicked!"));
+	// 이 부분이 GameInstance의 기능을 호출하는 코드입니다.
+	UTTGameInstance* GameInstance = Cast<UTTGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (GameInstance)
+	{
+		GameInstance->StartGame();
+	}
 }
 
 void UTTLobbyWidget::OnBackButtonClicked()
