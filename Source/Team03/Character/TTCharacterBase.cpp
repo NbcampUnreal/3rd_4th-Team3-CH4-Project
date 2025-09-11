@@ -10,24 +10,28 @@
 
 ATTCharacterBase::ATTCharacterBase()
 {
+	// 초기 값 설정
+	PrimaryActorTick.bCanEverTick = false;
+
 	BaseWalkSpeed = 300;
 	BaseSprintSpeed = 600;
-
-	PrimaryActorTick.bCanEverTick = false;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	// 캐릭터 무브먼트 관련 수치 조정
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 
+	// 스프링 암 컴포넌트 초기 설정
 	SprintArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArm"));
 	SprintArmComp->SetupAttachment(RootComponent);
 	SprintArmComp->bUsePawnControlRotation = true;
 	SprintArmComp->TargetArmLength = 400.0f;
 
+	// 카메라 컴포넌트 초기 설정
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	CameraComp->SetupAttachment(SprintArmComp);
 	CameraComp->bUsePawnControlRotation = false;
@@ -37,6 +41,7 @@ void ATTCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 게임모드에서 적절한 플레이어 컨트롤러를 연결할 수 있도록 추후 수정 부분
 	APlayerController* PC = Cast<APlayerController>(GetController());
 
 	if(IsValid(PC))

@@ -17,6 +17,7 @@ class TEAM03_API ATTCharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
+// 캐릭터 관련 컴포넌트 관리 및 수치 조정
 #pragma region ACharacter
 
 public:
@@ -34,6 +35,7 @@ public:
 
 #pragma endregion
 
+// 입력 시스템 관련 변수 및 함수
 #pragma region Input
 
 protected:
