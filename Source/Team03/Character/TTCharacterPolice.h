@@ -13,4 +13,9 @@ class TEAM03_API ATTCharacterPolice : public ATTCharacterBase
 	
 public:
 	ATTCharacterPolice();
+
+protected:
+	virtual float GetDefaultWalkSpeed() const override;
+
+	virtual float GetSprintWalkSpeed() const override;
 };

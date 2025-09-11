@@ -33,7 +33,7 @@ ATTCharacterBase::ATTCharacterBase()
 
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = GetDefaultWalkSpeed();
 
 	// 스프링 암 컴포넌트 초기 설정
 	SprintArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SprintArm"));
@@ -80,6 +80,16 @@ void ATTCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+float ATTCharacterBase::GetDefaultWalkSpeed() const
+{
+	return BaseWalkSpeed;
+}
+
+float ATTCharacterBase::GetSprintWalkSpeed() const
+{
+	return BaseSprintSpeed;
+}
+
 void ATTCharacterBase::Move(const FInputActionValue& Value)
 {
 	const FVector2D InMovementVector = Value.Get<FVector2D>();
@@ -123,7 +133,7 @@ void ATTCharacterBase::StartSprint(const FInputActionValue& Value)
 	if(GetCharacterMovement())
 	{
 		bIsSprinting = true;
-		UpdateSpeed();
+		GetCharacterMovement()->MaxWalkSpeed = GetSprintWalkSpeed();
 	}
 }
 void ATTCharacterBase::StopSprint(const FInputActionValue& Value)
@@ -131,13 +141,6 @@ void ATTCharacterBase::StopSprint(const FInputActionValue& Value)
 	if(GetCharacterMovement())
 	{
 		bIsSprinting = false;
-		UpdateSpeed();
+		GetCharacterMovement()->MaxWalkSpeed = GetDefaultWalkSpeed();
 	}
-}
-
-void ATTCharacterBase::UpdateSpeed()
-{
-	float CurrentBaseSpeed = bIsSprinting ? BaseSprintSpeed : BaseWalkSpeed;
-
-	GetCharacterMovement()->MaxWalkSpeed = CurrentBaseSpeed;
 }

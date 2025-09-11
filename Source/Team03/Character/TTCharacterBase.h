@@ -27,6 +27,11 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+protected:
+	virtual float GetDefaultWalkSpeed() const;
+	
+	virtual float GetSprintWalkSpeed() const;
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	USpringArmComponent* SprintArmComp;
@@ -59,15 +64,11 @@ private:
 	UFUNCTION()
 	void StopSprint(const FInputActionValue& Value);
 
-	void UpdateSpeed();
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float BaseWalkSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float BaseSprintSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	float CurrentSpeedMultiplier;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	bool bIsSprinting;
 
