@@ -11,4 +11,6 @@ class TEAM03_API ATTCharacterPolice : public ATTCharacterBase
 {
 	GENERATED_BODY()
 	
+public:
+	ATTCharacterPolice();
 };

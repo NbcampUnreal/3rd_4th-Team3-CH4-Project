@@ -39,11 +39,11 @@ public:
 #pragma region Input
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UTTBaseCharacterInput> PlayerBaseCharacterInputConfig;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="DataAsset")
+	TObjectPtr<UTTBaseCharacterInput> BaseCharacterInputData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UInputMappingContext> PlayerCharacterInputMappingContext;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="IMC")
+	TObjectPtr<UInputMappingContext> BaseCharcterIMC;
 
 private:
 	UFUNCTION()

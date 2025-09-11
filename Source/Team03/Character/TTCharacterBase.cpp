@@ -3,6 +3,7 @@
 #include "Character/TTCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -13,14 +14,23 @@ ATTCharacterBase::ATTCharacterBase()
 	// 초기 값 설정
 	PrimaryActorTick.bCanEverTick = false;
 
-	BaseWalkSpeed = 300;
-	BaseSprintSpeed = 600;
-
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
 
+	// 스켈레탈 메시 및 캡슐 초기 값 설정
+	float CharacterRadius = 40.f;
+	float CharacterHalfHeight = 90.f;
+
+	GetCapsuleComponent()->InitCapsuleSize(CharacterRadius, CharacterHalfHeight);
+	FVector PivotLocation(0.f, 0.f, -CharacterHalfHeight);
+	FRotator PivotRotation(0.f, -90.f, 0.f);
+	GetMesh()->SetRelativeLocationAndRotation(PivotLocation, PivotRotation);
+
 	// 캐릭터 무브먼트 관련 수치 조정
+	BaseWalkSpeed = 300;
+	BaseSprintSpeed = 600;
+
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
@@ -49,7 +59,7 @@ void ATTCharacterBase::BeginPlay()
 		UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
 		if(IsValid(SubSystem))
 		{
-			SubSystem->AddMappingContext(PlayerCharacterInputMappingContext, 0);
+			SubSystem->AddMappingContext(BaseCharcterIMC, 0);
 		}
 	}
 }
@@ -61,12 +71,12 @@ void ATTCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	UEnhancedInputComponent* EnhancedInputComp = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	if(IsValid(EnhancedInputComp))
 	{
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Move, ETriggerEvent::Triggered, this, &ThisClass::Move);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Jump, ETriggerEvent::Triggered, this, &ThisClass::StartJump);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Jump, ETriggerEvent::Completed, this, &ThisClass::StopJump);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Sprint, ETriggerEvent::Triggered, this, &ThisClass::StartSprint);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Sprint, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
-		EnhancedInputComp->BindAction(PlayerBaseCharacterInputConfig->Look, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Move, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Jump, ETriggerEvent::Triggered, this, &ThisClass::StartJump);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Jump, ETriggerEvent::Completed, this, &ThisClass::StopJump);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Sprint, ETriggerEvent::Triggered, this, &ThisClass::StartSprint);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Sprint, ETriggerEvent::Completed, this, &ThisClass::StopSprint);
+		EnhancedInputComp->BindAction(BaseCharacterInputData->Look, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	}
 }
 
