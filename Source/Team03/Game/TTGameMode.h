@@ -19,4 +19,9 @@ public:
 
 	// 경기가 시작될 때 호출되는 함수
 	virtual void HandleMatchHasStarted() override;
+
+protected:
+	// 경찰 캐릭터로 사용할 블루프린트 클래스를 에디터에서 지정할 수 있도록 변수를 노출시킵니다.
+	UPROPERTY(EditDefaultsOnly, Category = "Classes")
+	TSubclassOf<APawn> PolicePawnClass;
 };

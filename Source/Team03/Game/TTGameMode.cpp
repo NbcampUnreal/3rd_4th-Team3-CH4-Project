@@ -35,7 +35,7 @@ void ATTGameMode::HandleMatchHasStarted()
 	}
 
 	// 모든 플레이어를 '도둑'으로 초기화
-	for (APlayerState* PS : PlayerStates)
+	for (TObjectPtr<APlayerState> PS : PlayerStates)
 	{
 		if (ATTPlayerState* TTPlayerState = Cast<ATTPlayerState>(PS))
 		{
@@ -43,13 +43,33 @@ void ATTGameMode::HandleMatchHasStarted()
 		}
 	}
 
-	// 랜덤으로 한 명을 뽑아 '경찰'로 변경 
+	// 2. 랜덤으로 한 명을 뽑아 '경찰'로 지정
 	const int32 RandomPoliceIndex = FMath::RandRange(0, PlayerStates.Num() - 1);
-	if (PlayerStates.IsValidIndex(RandomPoliceIndex)) // 뽑은 번호가 유효한지 한번 더 확인
+	if (PlayerStates.IsValidIndex(RandomPoliceIndex))
 	{
-		if (ATTPlayerState* PolicePlayerState = Cast<ATTPlayerState>(PlayerStates[RandomPoliceIndex]))
+		ATTPlayerState* PolicePlayerState = Cast<ATTPlayerState>(PlayerStates[RandomPoliceIndex]);
+		if (PolicePlayerState)
 		{
 			PolicePlayerState->Team = ETeam::Police;
+
+			APlayerController* PoliceController = PolicePlayerState->GetPlayerController();
+			if (PoliceController && PolicePawnClass)
+			{
+				// 기존 캐릭터(도둑)의 위치와 방향을 기억
+				FVector SpawnLocation = PoliceController->GetPawn()->GetActorLocation();
+				FRotator SpawnRotation = PoliceController->GetPawn()->GetActorRotation();
+
+				// 기존 캐릭터(도둑)를 제거
+				PoliceController->GetPawn()->Destroy();
+
+				// 기억해둔 위치에 새로운 경찰 캐릭터를 스폰
+				APawn* NewPolicePawn = GetWorld()->SpawnActor<APawn>(PolicePawnClass, SpawnLocation, SpawnRotation);
+				if (NewPolicePawn)
+				{
+					// 경찰 플레이어 컨트롤러가 새로 스폰된 경찰 캐릭터에 빙의(조종 시작)
+					PoliceController->Possess(NewPolicePawn);
+				}
+			}
 		}
 	}
 }
