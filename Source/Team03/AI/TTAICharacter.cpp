@@ -24,20 +24,30 @@ void ATTAICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ATTAICharacter, bIsDead);
+	DOREPLIFETIME(ATTAICharacter, AppearanceIndex);
 }
 
 void ATTAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority() == true)
+	if (AIMeshDataAsset && AIMeshDataAsset->SkeltalMeshes.Num() > 0)
 	{
-		if (AIMeshDataAsset && AIMeshDataAsset->SkeltalMeshes.Num() > 0)
+		if (HasAuthority() && AIMeshDataAsset && AIMeshDataAsset->SkeltalMeshes.Num() > 0)
 		{
-			int32 Index = FMath::RandRange(0, AIMeshDataAsset->SkeltalMeshes.Num() - 1);
-			GetMesh()->SetSkeletalMesh(AIMeshDataAsset->SkeltalMeshes[Index]);
+			AppearanceIndex = FMath::RandHelper(AIMeshDataAsset->SkeltalMeshes.Num());
+			OnRep_AppearanceIndex();
 		}
 	}
+}
+
+void ATTAICharacter::OnRep_AppearanceIndex()
+{
+	if (!GetMesh() || !AIMeshDataAsset) return;
+	const auto& Arr = AIMeshDataAsset->SkeltalMeshes;
+	if (!Arr.IsValidIndex(AppearanceIndex)) return;
+
+	GetMesh()->SetSkeletalMesh(Arr[AppearanceIndex]);
 }
 
 void ATTAICharacter::OnRep_IsDead()

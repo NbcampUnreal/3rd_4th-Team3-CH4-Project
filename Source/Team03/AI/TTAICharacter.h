@@ -21,6 +21,12 @@ public:
 
 	void Die();
 
+	UPROPERTY(ReplicatedUsing = OnRep_AppearanceIndex)
+	int32 AppearanceIndex = -1;
+
+	UFUNCTION()
+	void OnRep_AppearanceIndex();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -36,4 +42,5 @@ protected:
 private:
 	UPROPERTY(EditAnywhere, Category = "DataAsset")
 	TObjectPtr<UTTAIDataAsset> AIMeshDataAsset;
+
 };
