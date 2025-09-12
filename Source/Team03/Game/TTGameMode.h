@@ -21,7 +21,18 @@ public:
 	virtual void HandleMatchHasStarted() override;
 
 protected:
-	// 경찰 캐릭터로 사용할 블루프린트 클래스를 에디터에서 지정할 수 있도록 변수를 노출시킵니다.
+	// 경찰 캐릭터로 사용할 블루프린트 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "Classes")
 	TSubclassOf<APawn> PolicePawnClass;
+
+	// 경기 시작까지의 딜레이 시간 - 기본값을 5초로 설정
+	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
+	float MatchStartDelay = 5.0f;
+
+private:
+	// 딜레이 후 역할을 배정하는 함수
+	void AssignRolesAfterDelay();
+
+	// 독립적인 랜덤 숫자 생성기
+	FRandomStream RandomStream;
 };
