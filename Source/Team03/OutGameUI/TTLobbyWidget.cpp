@@ -26,10 +26,16 @@ void UTTLobbyWidget::NativeConstruct()
 	}
 }
 
-// 지금은 로그만 출력하도록 설정 각 버튼에 맞는 기능 구현 필요
+// 각 버튼에 맞는 기능 구현
 void UTTLobbyWidget::OnRefreshButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Refresh Button Clicked!"));
+	UE_LOG(LogTemp, Warning, TEXT("Refresh Button Clicked! Finding sessions..."));
+
+	UTTGameInstance* GameInstance = Cast<UTTGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (GameInstance)
+	{
+		GameInstance->FindRoomSessions();
+	}
 }
 
 void UTTLobbyWidget::OnCreateRoomButtonClicked()

@@ -192,9 +192,6 @@ void UTTGameInstance::CleanupAndExit()
 // '뒤로가기' 버튼 등이 호출하는 함수입니다. 세션을 정리하고 메인로 이동
 void UTTGameInstance::DestroyRoomSession()
 {
-	// 기본값은 '메인 메뉴로 가기'로 설정
-	bShouldQuitAfterDestroy = false;
-
 	if (SessionInterface.IsValid())
 	{
 		SessionInterface->ClearOnDestroySessionCompleteDelegates(this);

@@ -26,7 +26,7 @@ public:
 	// 세션을 찾는 함수
 	void FindRoomSessions();
 
-	//UI에서 '방 만들기'를 호출할 함수
+	//UI에서 '방 만들기'를 호출하는 함수
 	void CreateRoomSession();
 
 	//찾은 세션에 참여하는 함수

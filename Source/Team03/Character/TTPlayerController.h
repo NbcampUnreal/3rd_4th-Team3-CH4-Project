@@ -11,4 +11,7 @@ class TEAM03_API ATTPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
+public: 
+	void BeginPlay() override;
+	void OnPossess(APawn* InPawn) override;
 };
