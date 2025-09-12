@@ -2,6 +2,7 @@
 #include "Net/UnrealNetwork.h"
 #include "TTAIController.h"
 #include "Animation/AnimInstance.h"
+#include "AI/TTAIDataAsset.h"
 #include "Animation/AnimMontage.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -28,6 +29,12 @@ void ATTAICharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 void ATTAICharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (AIMeshDataAsset && AIMeshDataAsset->SkeltalMeshes.Num() > 0)
+	{
+		int32 Index = FMath::RandRange(0, AIMeshDataAsset->SkeltalMeshes.Num() - 1);
+		GetMesh()->SetSkeletalMesh(AIMeshDataAsset->SkeltalMeshes[Index]);
+	}
 
 }
 

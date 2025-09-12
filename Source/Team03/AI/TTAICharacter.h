@@ -5,6 +5,7 @@
 #include "TTAICharacter.generated.h"
 
 class UAnimMontage;
+class UTTAIDataAsset;
 
 UCLASS()
 class TEAM03_API ATTAICharacter : public ACharacter
@@ -32,5 +33,7 @@ protected:
 	UFUNCTION()
 	void OnRep_IsDead();
 
-	//g
+private:
+	UPROPERTY(EditAnywhere, Category = "DataAsset")
+	TObjectPtr<UTTAIDataAsset> AIMeshDataAsset;
 };
