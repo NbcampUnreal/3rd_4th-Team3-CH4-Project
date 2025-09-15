@@ -8,7 +8,12 @@ public class Team03 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "NavigationSystem", "GameplayTasks", "OnlineSubsystem", "OnlineSubsystemNull" });
+		PublicDependencyModuleNames.AddRange(new string[] 
+		{ 
+			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", 
+			"UMG", "AIModule", "NavigationSystem", "GameplayTasks", 
+			"OnlineSubsystem", "OnlineSubsystemNull", "Slate", "SlateCore"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

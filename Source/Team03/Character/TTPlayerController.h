@@ -17,11 +17,19 @@ public:
 	void BeginPlay() override;
 	void OnPossess(APawn* InPawn) override;
 
+	// 서버로 채팅 메시지를 전송하는 RPC 함수 선언
+	UFUNCTION(Server, Reliable)
+	void Server_SendChatMessage(const FString& Message);
+
 protected:
 	// 서버로부터 PlayerState를 성공적으로 받았을 때 클라이언트에서 호출
 	virtual void OnRep_PlayerState() override;
 
 private:
+	// GameState의 델리게이트에 바인딩할 함수
+	UFUNCTION()
+	void OnChatUpdated_Handle(const TArray<FString>& Messages);
+
 	// HUD 위젯을 생성하고 화면에 표시하는 함수
 	void CreateHUD();
 

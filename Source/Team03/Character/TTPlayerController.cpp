@@ -3,6 +3,7 @@
 #include "Character/TTPlayerController.h"
 #include "InGameUI/TT_WBP_HUD.h"
 #include "Game/TTGameState.h"
+#include "Game/TTPlayerState.h"
 #include "TimerManager.h"
 
 // 게임 시작 마우스 커서 숨기기 및 게임 전용 입력 모드 설정
@@ -23,9 +24,15 @@ void ATTPlayerController::OnPossess(APawn* InPawn)
 void ATTPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
-
 	// PlayerState가 유효해지는 시점에 HUD를 생성
 	CreateHUD();
+
+	ATTGameState* TTGameState = GetWorld()->GetGameState<ATTGameState>();
+	if (TTGameState && IsLocalController())
+	{
+		// OnChatUpdated 신호가 오면, OnChatUpdated_Handle 함수를 실행하도록 구독
+		TTGameState->OnChatUpdated.AddUObject(this, &ATTPlayerController::OnChatUpdated_Handle);
+	}
 }
 
 void ATTPlayerController::CreateHUD()
@@ -69,5 +76,27 @@ void ATTPlayerController::UpdateHUDTimer()
 			HUDWidgetInstance->ShowPreRoundUI(false);
 			HUDWidgetInstance->UpdateTimer(TTGameState->RemainingTime);
 		}
+	}
+}
+
+void ATTPlayerController::Server_SendChatMessage_Implementation(const FString& Message)
+{
+	ATTGameState* TTGameState = GetWorld()->GetGameState<ATTGameState>();
+	ATTPlayerState* TTPlayerState = GetPlayerState<ATTPlayerState>();
+
+	if (TTGameState && TTPlayerState)
+	{
+		// "[닉네임]: 메시지" 형태로 만들어서 GameState에 추가
+		FString FormattedMessage = FString::Printf(TEXT("%s: %s"), *TTPlayerState->GetPlayerName(), *Message);
+		TTGameState->AddChatMessage(FormattedMessage);
+	}
+}
+
+void ATTPlayerController::OnChatUpdated_Handle(const TArray<FString>& Messages)
+{
+	if (HUDWidgetInstance)
+	{
+		// HUD에게 채팅 내역을 업데이트하라고 전달
+		HUDWidgetInstance->UpdateChat(Messages);
 	}
 }
