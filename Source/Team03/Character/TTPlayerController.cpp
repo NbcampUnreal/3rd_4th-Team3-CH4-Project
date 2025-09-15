@@ -52,11 +52,22 @@ void ATTPlayerController::CreateHUD()
 
 void ATTPlayerController::UpdateHUDTimer()
 {
-	// GameState와 HUD 인스턴스가 유효한지 확인
 	ATTGameState* TTGameState = GetWorld()->GetGameState<ATTGameState>();
 	if (TTGameState && HUDWidgetInstance)
 	{
-		// GameState에서 남은 시간을 가져와 HUD 위젯의 업데이트 함수를 호출합니다.
-		HUDWidgetInstance->UpdateTimer(TTGameState->RemainingTime);
+		// 만약 역할 배정 카운트다운이 진행 중이라면
+		if (TTGameState->RoleAssignmentCountdownTime > 0)
+		{
+			// 카운트다운 UI를 보여주고 숫자를 업데이트합니다.
+			HUDWidgetInstance->ShowPreRoundUI(true);
+			HUDWidgetInstance->UpdatePreRoundCountdown(TTGameState->RoleAssignmentCountdownTime);
+		}
+		// 카운트다운이 끝났다면
+		else
+		{
+			// 카운트다운 UI를 숨기고 메인 게임 타이머를 업데이트합니다.
+			HUDWidgetInstance->ShowPreRoundUI(false);
+			HUDWidgetInstance->UpdateTimer(TTGameState->RemainingTime);
+		}
 	}
 }

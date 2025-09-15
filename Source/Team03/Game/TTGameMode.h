@@ -33,11 +33,14 @@ protected:
 	float MatchStartDelay = 10.0f;
 
 private:
-	// 딜레이 후 역할을 배정하는 함수
-	void AssignRolesAfterDelay();
+	// 10초 카운트다운을 1초마다 업데이트할 함수
+	void UpdatePreRoundTimer();
 
 	// 1초마다 게임 시간을 업데이트할 함수
 	void UpdateGameTimer();
+
+	// 역할 배정 타이머를 관리할 핸들
+	FTimerHandle PreRoundTimerHandle;
 
 	// 게임 타이머를 관리할 핸들
 	FTimerHandle GameTimerHandle;

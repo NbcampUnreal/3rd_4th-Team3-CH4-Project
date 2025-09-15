@@ -14,6 +14,8 @@ class TEAM03_API UTT_WBP_HUD : public UUserWidget
 public:
 	// PlayerController가 호출할 함수 -> 남은 시간
 	void UpdateTimer(int32 RemainingTime);
+	void UpdatePreRoundCountdown(int32 CountdownTime);
+	void ShowPreRoundUI(bool bShow);
 
 
 protected:
@@ -22,5 +24,8 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> TimerText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> PreRoundCountdownText;
 };
 

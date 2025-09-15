@@ -22,76 +22,76 @@ void ATTGameMode::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
 
-	// 10초 카운트다운 시작
-	// MatchStartDelay(10초) 후에 AssignRolesAfterDelay 함수를 호출하도록 타이머를 설정
-	FTimerHandle MatchStartTimer;
-	GetWorld()->GetTimerManager().SetTimer(
-		MatchStartTimer,
-		this,
-		&ATTGameMode::AssignRolesAfterDelay,
-		MatchStartDelay,
-		false
-	);
+	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+	if (TTGameState)
+	{
+		// GameState의 카운트다운 시간을 초기화하고 1초마다 반복하는 타이머를 시작합니다.
+		TTGameState->RoleAssignmentCountdownTime = MatchStartDelay;
 
-	// (나중에 할 일) 이 시점에서 모든 플레이어의 UI에 "10초 후 게임이 시작됩니다" 라는 메시지를 띄워줄 수 있음
+		GetWorld()->GetTimerManager().SetTimer(
+			PreRoundTimerHandle,
+			this,
+			&ATTGameMode::UpdatePreRoundTimer,
+			1.0f,
+			true
+		);
+	}
 }
 
-void ATTGameMode::AssignRolesAfterDelay()
+void ATTGameMode::UpdatePreRoundTimer()
 {
-	// 10초 후 역할 배정 시작
-	// 이 함수는 10초 후에 정확히 한 번만 실행됩니다.
-
 	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
-	if (TTGameState == nullptr)
+	if (TTGameState)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AssignRolesAfterDelay: TTGameState is not valid!"));
-		return;
-	}
+		// 카운트다운 시간을 1초 줄입니다.
+		TTGameState->RoleAssignmentCountdownTime--;
 
-	auto& PlayerStates = TTGameState->PlayerArray;
-	if (PlayerStates.Num() == 0) return;
-
-	// 모든 플레이어를 '도둑'으로 초기화
-	for (TObjectPtr<APlayerState> PS : PlayerStates)
-	{
-		if (ATTPlayerState* TTPlayerState = Cast<ATTPlayerState>(PS))
+		// 카운트다운이 끝나면
+		if (TTGameState->RoleAssignmentCountdownTime <= 0)
 		{
-			TTPlayerState->Team = ETeam::Thief;
-		}
-	}
+			// 이 타이머를 멈추고 역할 배정을 시작합니다.
+			GetWorld()->GetTimerManager().ClearTimer(PreRoundTimerHandle);
+			// 기존의 역할 배정 로직을 이곳으로 가져옵니다.
+			// ... 역할 배정 및 캐릭터 교체 로직 ...
+			auto& PlayerStates = TTGameState->PlayerArray;
+			if (PlayerStates.Num() == 0) return;
 
-	// 랜덤으로 한 명을 뽑아 '경찰'로 변경
-	const int32 RandomPoliceIndex = RandomStream.RandRange(0, PlayerStates.Num() - 1);
-	if (PlayerStates.IsValidIndex(RandomPoliceIndex))
-	{
-		if (ATTPlayerState* PolicePlayerState = Cast<ATTPlayerState>(PlayerStates[RandomPoliceIndex]))
-		{
-			PolicePlayerState->Team = ETeam::Police;
-
-			// 경찰 캐릭터 교체 로직
-			APlayerController* PoliceController = PolicePlayerState->GetPlayerController();
-			if (PoliceController && PolicePawnClass)
+			// 모든 플레이어를 '도둑'으로 초기화
+			for (TObjectPtr<APlayerState> PS : PlayerStates)
 			{
-				FVector SpawnLocation = PoliceController->GetPawn()->GetActorLocation();
-				FRotator SpawnRotation = PoliceController->GetPawn()->GetActorRotation();
-				PoliceController->GetPawn()->Destroy();
-				APawn* NewPolicePawn = GetWorld()->SpawnActor<APawn>(PolicePawnClass, SpawnLocation, SpawnRotation);
-				if (NewPolicePawn)
+				if (ATTPlayerState* TTPlayerState = Cast<ATTPlayerState>(PS))
 				{
-					PoliceController->Possess(NewPolicePawn);
+					TTPlayerState->Team = ETeam::Thief;
 				}
 			}
+
+			// 랜덤으로 한 명을 뽑아 '경찰'로 변경
+			const int32 RandomPoliceIndex = RandomStream.RandRange(0, PlayerStates.Num() - 1);
+			if (PlayerStates.IsValidIndex(RandomPoliceIndex))
+			{
+				if (ATTPlayerState* PolicePlayerState = Cast<ATTPlayerState>(PlayerStates[RandomPoliceIndex]))
+				{
+					PolicePlayerState->Team = ETeam::Police;
+
+					// 경찰 캐릭터 교체 로직
+					APlayerController* PoliceController = PolicePlayerState->GetPlayerController();
+					if (PoliceController && PolicePawnClass)
+					{
+						FVector SpawnLocation = PoliceController->GetPawn()->GetActorLocation();
+						FRotator SpawnRotation = PoliceController->GetPawn()->GetActorRotation();
+						PoliceController->GetPawn()->Destroy();
+						APawn* NewPolicePawn = GetWorld()->SpawnActor<APawn>(PolicePawnClass, SpawnLocation, SpawnRotation);
+						if (NewPolicePawn)
+						{
+							PoliceController->Possess(NewPolicePawn);
+						}
+					}
+				}
+			}
+			// 역할 배정이 끝나면 메인 게임 타이머를 시작합니다.
+			GetWorld()->GetTimerManager().SetTimer(GameTimerHandle, this, &ATTGameMode::UpdateGameTimer, 1.0f, true);
 		}
 	}
-
-	// 역할 배정이 끝나면 1초마다 반복하는 게임 타이머 시작
-	GetWorld()->GetTimerManager().SetTimer(
-		GameTimerHandle,
-		this,
-		&ATTGameMode::UpdateGameTimer,
-		1.0f,
-		true
-	);
 }
 
 void ATTGameMode::UpdateGameTimer()
