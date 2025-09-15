@@ -28,6 +28,6 @@ private:
 	UPROPERTY(EditAnywhere, Category="DataAsset")
 	TObjectPtr<UTTCharacterThiefData> ThiefMeshData;
 
-	UPROPERTY(ReplicatedUsing=OnRep_SelectMesh)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_SelectMesh)
 	int32 Index;
 };

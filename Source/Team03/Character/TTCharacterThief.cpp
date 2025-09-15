@@ -18,7 +18,7 @@ void ATTCharacterThief::BeginPlay()
 	{
 		if(ThiefMeshData && ThiefMeshData->SkeltalMeshes.Num() > 0)
 		{
-			Index = FMath::RandRange(1, ThiefMeshData->SkeltalMeshes.Num()-1);
+			Index = FMath::RandRange(0, ThiefMeshData->SkeltalMeshes.Num()-1);
 		}
 	}
 	
