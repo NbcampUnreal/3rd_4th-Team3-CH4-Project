@@ -49,6 +49,8 @@ void UTTGameInstance::StartGame()
 {
 	if (SessionInterface.IsValid())
 	{ 
+		// 자동 참여를 시도한다고 표시
+		bIsTryingToAutoJoin = true;
 		// 클라이언트가 방을 찾기 시작하도록 FindRoomSessions 함수를 호출
 		FindRoomSessions();
 	}
@@ -67,12 +69,13 @@ void UTTGameInstance::CreateRoomSession()
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bIsDedicated = true;  // 데디케이트 서버 세션임을 명시
 		SessionSettings.bIsLANMatch = true;   // LAN 환경에서 테스트하기 위해 true로 설정
-		SessionSettings.NumPublicConnections = 2; // 최대 접속 인원
+		SessionSettings.NumPublicConnections = 4;   // 최대 인원	
 		SessionSettings.bShouldAdvertise = true;  // 다른 클라이언트가 이 세션을 검색할 수 있도록 공개
 		SessionSettings.bUsesPresence = true;
+		SessionSettings.bAllowJoinInProgress = false; // 게임 시작시 합류 불가
 		
 		// 커스텀 프로퍼티를 사용하여 이 세션을 식별할 수 있는 '꼬리표'
-		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo "), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		// 설정한 내용으로 세션 생성을 요청
 		SessionInterface->CreateSession(0, FName("My TT Game Session"), SessionSettings);
 	}
@@ -94,6 +97,11 @@ void UTTGameInstance::OnCreateRoomSessionComplete(FName SessionName, bool bWasSu
 // 클라이언트에서 참여 가능한 세션을 찾는 함수
 void UTTGameInstance::FindRoomSessions()
 {
+	// '빠른 참가'가 아닐 경우에만 의도를 false로 설정 StartGame()을 통해 호출될 수도 있기 때문
+	if (!bIsTryingToAutoJoin)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Finding sessions for refresh..."));
+	}
 	if (SessionInterface.IsValid())
 	{
 		// 세션 찾기가 완료되면 OnFindRoomSessionsComplete 함수를 호출하도록 델리게이트를 연결
@@ -115,16 +123,55 @@ void UTTGameInstance::FindRoomSessions()
 // FindRoomSessions 요청이 완료되었을 때 클라이언트에서 자동으로 호출되는 함수
 void UTTGameInstance::OnFindRoomSessionsComplete(bool bWasSuccessful)
 {
-	// 검색에 성공했고, 결과가 1개 이상 있다면
-	if (bWasSuccessful && SessionSearch.IsValid() && SessionSearch->SearchResults.Num() > 0)
+	// 만약 '빠른 참가'를 시도 중이었다면
+	if (bIsTryingToAutoJoin)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Found %d dedicated servers"), SessionSearch->SearchResults.Num());
-		// 테스트를 위해 찾은 첫 번째 세션에 바로 참여
-		JoinRoomSession(SessionSearch->SearchResults[0]);
+		// 시도가 끝났으므로, 플래그를 다시 false로 리셋합니다.
+		bIsTryingToAutoJoin = false;
+
+		// 방을 찾았다면
+		if (bWasSuccessful && SessionSearch.IsValid() && SessionSearch->SearchResults.Num() > 0)
+		{
+			// 첫 번째 방에 바로 참여합니다.
+			JoinRoomSession(SessionSearch->SearchResults[0]);
+		}
+		else // 참여할 방이 없다면
+		{
+			// 새로운 방을 만듭니다.
+			CreateRoomSession();
+		}
 	}
-	else
+	else // 단순 '새로고침'이었다면
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No servers found"));
+		if (bWasSuccessful && SessionSearch.IsValid())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("FindSessions successful. Found %d sessions."), SessionSearch->SearchResults.Num());
+			// 1. FServerInfo를 담을 빈 배열을 생성합니다.
+			TArray<FServerInfo> ServerInfoList;
+
+			// 2. 찾은 FOnlineSessionSearchResult 배열을 순회합니다.
+			for (int32 i = 0; i < SessionSearch->SearchResults.Num(); ++i)
+			{
+				const FOnlineSessionSearchResult& Result = SessionSearch->SearchResults[i];
+
+				// 3. 각 결과를 FServerInfo로 변환합니다.
+				FServerInfo Info;
+				Result.Session.SessionSettings.Get(FName("GameType"), Info.ServerName);
+				Info.MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
+				Info.CurrentPlayers = Info.MaxPlayers - Result.Session.NumOpenPublicConnections;
+				Info.SearchResultIndex = i;
+
+				// 4. 변환된 정보를 새 배열에 추가합니다.
+				ServerInfoList.Add(Info);
+			}
+
+			// 5. 깔끔하게 정리된 FServerInfo 배열을 UI에 방송합니다.
+			OnServerListUpdated.Broadcast(ServerInfoList);
+		}
+		else
+		{
+			OnServerListUpdated.Broadcast(TArray<FServerInfo>());
+		}
 	}
 }
 
@@ -228,5 +275,20 @@ void UTTGameInstance::OnDestroyRoomSessionComplete(FName SessionName, bool bWasS
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to destroy session!"));
+	}
+}
+
+// UI에서 선택한 세션에 참여하는 함수
+void UTTGameInstance::JoinFoundSession(int32 SessionIndex)
+{
+	// SessionIndex가 유효한 범위에 있고, 검색 결과가 존재하는지 확인합니다.
+	if (SessionSearch.IsValid() && SessionSearch->SearchResults.IsValidIndex(SessionIndex))
+	{
+		// 해당 인덱스의 세션에 참여합니다.
+		JoinRoomSession(SessionSearch->SearchResults[SessionIndex]);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Tried to join an invalid session index."));
 	}
 }

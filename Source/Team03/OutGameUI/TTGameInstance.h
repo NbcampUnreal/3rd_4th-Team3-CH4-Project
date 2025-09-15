@@ -4,12 +4,33 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
-#include "Interfaces/OnlineSessionInterface.h" // 온라인 세션 기능을 사용하기 위해 필요한 헤더
+#include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "TTGameInstance.generated.h"
 
 /**
- * 
+ *
  */
+USTRUCT(BlueprintType)
+struct FServerInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FString ServerName;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 CurrentPlayers = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	int32 MaxPlayers = 0;
+
+	// UI에서 Join할 때 사용할 인덱스 (GameInstance 내부 배열 인덱스)
+	UPROPERTY(BlueprintReadOnly)
+	int32 SearchResultIndex = INDEX_NONE;
+};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnServerListUpdated, const TArray<FServerInfo>&, ServerList);
+
 UCLASS()
 class TEAM03_API UTTGameInstance : public UGameInstance
 {
@@ -31,13 +52,18 @@ public:
 
 	//찾은 세션에 참여하는 함수
 	void JoinRoomSession(const FOnlineSessionSearchResult& SearchResult);
-	
+
 	//현재 참여 중인 세션을 파괴
 	void DestroyRoomSession();
 
 	//세션을 정리하고 게임을 종료
 	void CleanupAndExit();
 
+	void JoinFoundSession(int32 SessionIndex);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnServerListUpdated OnServerListUpdated;
+	
 private:
 	
 	//세션 생성이 완료되었을 때 엔진이 자동으로 호출할 함수 (델리게이트 콜백)
@@ -60,5 +86,8 @@ private:
 
 	//세션 검색 결과를 저장할 포인터
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	// '빠른 참가' (자동 참여)를 시도 중인지 여부를 기억하는 변수
+	bool bIsTryingToAutoJoin = false;
 };
 

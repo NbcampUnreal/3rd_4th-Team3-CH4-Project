@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "OutGameUI/TTGameInstance.h"
 #include "TTLobbyWidget.generated.h"
 
 class UButton;
+class UScrollBox;
+class UTTSessionEntryWidget;
 /**
  * 
  */
@@ -29,6 +32,12 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UButton* BackButton;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UTTSessionEntryWidget> SessionEntryClass;
+	
+	UPROPERTY(meta = (BindWidget))
+	UScrollBox* ServerList_ScrollBox;
+	
 	//각 버튼이 클릭 되었을 때 호출되는 함수
 	UFUNCTION()
 	void OnRefreshButtonClicked();
@@ -38,4 +47,8 @@ private:
 
 	UFUNCTION()
 	void OnBackButtonClicked();
+
+	//서버 리스트를 갱신하는 함수
+	UFUNCTION()
+	void UpdateSessionList(const TArray<FServerInfo>& ServerList);
 };
