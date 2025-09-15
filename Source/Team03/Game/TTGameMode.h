@@ -20,18 +20,27 @@ public:
 	// 경기가 시작될 때 호출되는 함수
 	virtual void HandleMatchHasStarted() override;
 
+	// 경찰이 도둑을 잡았을 때 호출할 함수 (나중에 사용할꺼임)
+	void OnThiefCaught();
+
 protected:
 	// 경찰 캐릭터로 사용할 블루프린트 클래스
 	UPROPERTY(EditDefaultsOnly, Category = "Classes")
 	TSubclassOf<APawn> PolicePawnClass;
 
-	// 경기 시작까지의 딜레이 시간 - 기본값을 5초로 설정
+	// 경기 시작까지의 딜레이 시간 - 기본값을 10초로 설정
 	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
-	float MatchStartDelay = 5.0f;
+	float MatchStartDelay = 10.0f;
 
 private:
 	// 딜레이 후 역할을 배정하는 함수
 	void AssignRolesAfterDelay();
+
+	// 1초마다 게임 시간을 업데이트할 함수
+	void UpdateGameTimer();
+
+	// 게임 타이머를 관리할 핸들
+	FTimerHandle GameTimerHandle;
 
 	// 독립적인 랜덤 숫자 생성기
 	FRandomStream RandomStream;

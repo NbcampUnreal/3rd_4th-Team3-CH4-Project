@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "TTPlayerController.generated.h"
 
+class UTT_WBP_HUD;
+
 UCLASS()
 class TEAM03_API ATTPlayerController : public APlayerController
 {
@@ -14,4 +16,26 @@ class TEAM03_API ATTPlayerController : public APlayerController
 public: 
 	void BeginPlay() override;
 	void OnPossess(APawn* InPawn) override;
+
+protected:
+	// 서버로부터 PlayerState를 성공적으로 받았을 때 클라이언트에서 호출
+	virtual void OnRep_PlayerState() override;
+
+private:
+	// HUD 위젯을 생성하고 화면에 표시하는 함수
+	void CreateHUD();
+
+	// 1초마다 HUD의 타이머를 업데이트하는 함수
+	void UpdateHUDTimer();
+
+	// 에디터에서 지정할 HUD 위젯 블루프린트
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTT_WBP_HUD> HUDWidgetClass;
+
+	// 실제 생성된 HUD 위젯의 인스턴스
+	UPROPERTY()
+	TObjectPtr<UTT_WBP_HUD> HUDWidgetInstance;
+
+	// HUD 업데이트 타이머를 관리할 핸들
+	FTimerHandle HUDUpdateTimerHandle;
 };
