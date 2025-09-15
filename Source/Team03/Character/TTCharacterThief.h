@@ -18,7 +18,16 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	UFUNCTION()
+	void OnRep_SelectMesh();
+
 private:
 	UPROPERTY(EditAnywhere, Category="DataAsset")
 	TObjectPtr<UTTCharacterThiefData> ThiefMeshData;
+
+	UPROPERTY(ReplicatedUsing=OnRep_SelectMesh)
+	int32 Index;
 };
