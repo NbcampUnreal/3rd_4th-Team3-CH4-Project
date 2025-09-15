@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Input/TTBaseCharacterInput.h"
+#include "Net/UnrealNetwork.h"
 
 ATTCharacterBase::ATTCharacterBase()
 {
@@ -17,6 +18,8 @@ ATTCharacterBase::ATTCharacterBase()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
+
+	bReplicates = true;
 
 	// 스켈레탈 메시 및 캡슐 초기 값 설정
 	float CharacterRadius = 40.f;
@@ -132,15 +135,53 @@ void ATTCharacterBase::StartSprint(const FInputActionValue& Value)
 {
 	if(GetCharacterMovement())
 	{
-		bIsSprinting = true;
-		GetCharacterMovement()->MaxWalkSpeed = GetSprintWalkSpeed();
+		if(HasAuthority())
+		{
+			bIsSprinting = true;
+			GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+		}
+		else
+		{
+			ServerStartSprint();
+		}
 	}
 }
 void ATTCharacterBase::StopSprint(const FInputActionValue& Value)
 {
 	if(GetCharacterMovement())
 	{
-		bIsSprinting = false;
-		GetCharacterMovement()->MaxWalkSpeed = GetDefaultWalkSpeed();
+		if(HasAuthority())
+		{
+			bIsSprinting = false;
+			GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+		}
+		else
+		{
+			ServerStopSprint();
+		}
 	}
+}
+
+void ATTCharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, bIsSprinting);
+}
+
+void ATTCharacterBase::OnRep_ChangeSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+}
+
+void ATTCharacterBase::ServerStartSprint_Implementation()
+{
+	bIsSprinting = true;
+	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+}
+
+void ATTCharacterBase::ServerStopSprint_Implementation()
+{
+	bIsSprinting = false;
+	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
 }

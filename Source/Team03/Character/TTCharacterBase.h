@@ -69,7 +69,26 @@ protected:
 	float BaseWalkSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float BaseSprintSpeed;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+
+#pragma endregion
+
+// 레플리케이션 관련
+#pragma region Replication
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty> &OutLifetimeProps) const override;
+
+private:
+	UFUNCTION()
+	void OnRep_ChangeSpeed();
+
+	UFUNCTION(Server, Reliable)
+	void ServerStartSprint();
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopSprint();
+
+protected:
+	UPROPERTY(ReplicatedUsing = OnRep_ChangeSpeed)
 	bool bIsSprinting;
 
 #pragma endregion
