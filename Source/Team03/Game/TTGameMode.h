@@ -17,9 +17,6 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	// 경기가 시작될 때 호출되는 함수
-	virtual void HandleMatchHasStarted() override;
-
 	// 경찰이 도둑을 잡았을 때 호출할 함수 (나중에 사용할꺼임)
 	void OnThiefCaught();
 
@@ -28,9 +25,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Classes")
 	TSubclassOf<APawn> PolicePawnClass;
 
-	// 경기 시작까지의 딜레이 시간 - 기본값을 10초로 설정
+	// 경기를 시작하기 위한 목표 플레이어 수
 	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
-	float MatchStartDelay = 10.0f;
+	int32 NumPlayersToStartMatch = 3;
+
+	// 경기 시작까지의 딜레이 시간 - 기본값을 20초로 설정
+	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
+	float MatchStartDelay = 20.0f;
 
 private:
 	// 10초 카운트다운을 1초마다 업데이트할 함수
@@ -38,6 +39,9 @@ private:
 
 	// 1초마다 게임 시간을 업데이트할 함수
 	void UpdateGameTimer();
+
+	// 카운트다운이 시작되었는지 여부를 저장하는 변수
+	bool bIsCountdownStarted = false;
 
 	// 역할 배정 타이머를 관리할 핸들
 	FTimerHandle PreRoundTimerHandle;

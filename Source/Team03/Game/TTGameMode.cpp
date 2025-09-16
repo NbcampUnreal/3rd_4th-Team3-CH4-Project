@@ -16,25 +16,26 @@ ATTGameMode::ATTGameMode()
 void ATTGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-}
 
-void ATTGameMode::HandleMatchHasStarted()
-{
-	Super::HandleMatchHasStarted();
-
-	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
-	if (TTGameState)
+	if (!bIsCountdownStarted && GetNumPlayers() >= NumPlayersToStartMatch)
 	{
-		// GameState의 카운트다운 시간을 초기화하고 1초마다 반복하는 타이머를 시작합니다.
-		TTGameState->RoleAssignmentCountdownTime = MatchStartDelay;
+		// 카운트다운이 시작되었다고 표시 (다른 플레이어가 접속해도 중복 실행X)
+		bIsCountdownStarted = true;
 
-		GetWorld()->GetTimerManager().SetTimer(
-			PreRoundTimerHandle,
-			this,
-			&ATTGameMode::UpdatePreRoundTimer,
-			1.0f,
-			true
-		);
+		// GameState의 카운트다운 시간을 초기화하고 10초 타이머를 시작
+		ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+		if (TTGameState)
+		{
+			TTGameState->RoleAssignmentCountdownTime = MatchStartDelay;
+
+			GetWorld()->GetTimerManager().SetTimer(
+				PreRoundTimerHandle,
+				this,
+				&ATTGameMode::UpdatePreRoundTimer,
+				1.0f,
+				true
+			);
+		}
 	}
 }
 
