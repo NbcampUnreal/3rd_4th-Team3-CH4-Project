@@ -24,11 +24,11 @@ public:
 	// UI가 바인딩할 델리게이트
 	FOnChatUpdatedDelegate OnChatUpdated;
 
-	// 게임의 남은 시간 변수 (10분)
+	// 게임의 남은 시간 변수 (10분) (테스트 용 1분)
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Replicated, Category = "Game")
 	int32 RemainingTime;
 
-	// 역할 배정 카운트다운 시간 변수 (10초)
+	// 역할 배정 카운트다운 시간 변수 (20초)
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Replicated, Category = "Game")
 	int32 RoleAssignmentCountdownTime;
 

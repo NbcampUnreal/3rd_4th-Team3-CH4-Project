@@ -34,11 +34,17 @@ protected:
 	float MatchStartDelay = 20.0f;
 
 private:
-	// 10초 카운트다운을 1초마다 업데이트할 함수
+	// 포지션 배정 카운트다운을 1초마다 업데이트할 함수
 	void UpdatePreRoundTimer();
 
 	// 1초마다 게임 시간을 업데이트할 함수
 	void UpdateGameTimer();
+
+	// 모든 플레이어를 텔레포트시키고 입력을 막는 함수
+	void TeleportAndImmobilizePlayers();
+
+	// 모든 플레이어의 입력을 다시 활성화하는 함수
+	void EnableAllPlayerInputs();
 
 	// 카운트다운이 시작되었는지 여부를 저장하는 변수
 	bool bIsCountdownStarted = false;

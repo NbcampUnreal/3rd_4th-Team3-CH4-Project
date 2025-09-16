@@ -3,6 +3,8 @@
 #include "Game/TTPlayerState.h"
 #include "Character/TTPlayerController.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/TargetPoint.h"
 
 ATTGameMode::ATTGameMode()
 {
@@ -44,16 +46,20 @@ void ATTGameMode::UpdatePreRoundTimer()
 	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
 	if (TTGameState)
 	{
-		// 카운트다운 시간을 1초 줄입니다.
+		// 카운트다운 시간을 1초 줄임
 		TTGameState->RoleAssignmentCountdownTime--;
+
+		// 카운트다운 5초 남았을 때 랜덤 위치 텔레포트
+		if (TTGameState->RoleAssignmentCountdownTime == 5)
+		{
+			TeleportAndImmobilizePlayers();
+		}
 
 		// 카운트다운이 끝나면
 		if (TTGameState->RoleAssignmentCountdownTime <= 0)
 		{
-			// 이 타이머를 멈추고 역할 배정을 시작합니다.
+			// 이 타이머를 멈추고 역할 배정을 시작
 			GetWorld()->GetTimerManager().ClearTimer(PreRoundTimerHandle);
-			// 기존의 역할 배정 로직을 이곳으로 가져옵니다.
-			// ... 역할 배정 및 캐릭터 교체 로직 ...
 			auto& PlayerStates = TTGameState->PlayerArray;
 			if (PlayerStates.Num() == 0) return;
 
@@ -89,8 +95,64 @@ void ATTGameMode::UpdatePreRoundTimer()
 					}
 				}
 			}
-			// 역할 배정이 끝나면 메인 게임 타이머를 시작합니다.
+			// 역할 배정이 끝나면 플레이어의 입력을 다시 풀어줌
+			EnableAllPlayerInputs();
+
+			// 역할 배정이 끝나면 메인 게임 타이머 시작
 			GetWorld()->GetTimerManager().SetTimer(GameTimerHandle, this, &ATTGameMode::UpdateGameTimer, 1.0f, true);
+		}
+	}
+}
+
+void ATTGameMode::TeleportAndImmobilizePlayers()
+{
+	// 맵에 배치된 모든 TargetPoint를 찾아서 배열에 담음
+	TArray<AActor*> SpawnPoints;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATargetPoint::StaticClass(), SpawnPoints);
+
+	// 스폰 포인트가 없으면 행동 X
+	if (SpawnPoints.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("스폰 포인트가 없습니다."));
+		return;
+	}
+
+	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+	if (TTGameState == nullptr) return;
+
+	// 모든 플레이어를 순회하며 텔레포트시키고 입력을 막기
+	for (int32 i = 0; i < TTGameState->PlayerArray.Num(); ++i)
+	{
+		ATTPlayerController* PC = Cast<ATTPlayerController>(TTGameState->PlayerArray[i]->GetPlayerController());
+		if (PC)
+		{
+			// 플레이어의 입력을 막기
+			PC->DisablePlayerInput();
+
+			APawn* Pawn = PC->GetPawn();
+			if (Pawn)
+			{
+				// 스폰 포인트를 순환하며 위치를 지정하고 텔레포트
+				int32 SpawnPointIndex = i % SpawnPoints.Num();
+				FVector NewLocation = SpawnPoints[SpawnPointIndex]->GetActorLocation();
+				Pawn->SetActorLocation(NewLocation);
+			}
+		}
+	}
+}
+
+void ATTGameMode::EnableAllPlayerInputs()
+{
+	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+	if (TTGameState == nullptr) return;
+
+	// 모든 플레이어를 순회하며 입력을 다시 활성화합니다.
+	for (TObjectPtr<APlayerState> PS : TTGameState->PlayerArray)
+	{
+		ATTPlayerController* PC = Cast<ATTPlayerController>(PS->GetPlayerController());
+		if (PC)
+		{
+			PC->EnablePlayerInput();
 		}
 	}
 }
@@ -106,7 +168,7 @@ void ATTGameMode::UpdateGameTimer()
 		// 시간이 다 되었다면
 		if (TTGameState->RemainingTime <= 0)
 		{
-			// 타이머를 멈춥니다.
+			// 타이머를 스탑
 			GetWorld()->GetTimerManager().ClearTimer(GameTimerHandle);
 
 			// 도둑 승리
@@ -141,6 +203,7 @@ void ATTGameMode::OnThiefCaught()
 
 		// 경찰 승리 로그
 		UE_LOG(LogTemp, Warning, TEXT("Game Over: Police Wins!"));
-		// 여기에 게임 종료 및 결과 UI 표시 로직을 추가하면 됩니다.
+		// 여기에 게임 종료 및 결과 UI 표시 로직을 추가
 	}
 }
+

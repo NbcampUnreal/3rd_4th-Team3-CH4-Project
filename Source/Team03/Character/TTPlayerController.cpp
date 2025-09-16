@@ -100,3 +100,15 @@ void ATTPlayerController::OnChatUpdated_Handle(const TArray<FString>& Messages)
 		HUDWidgetInstance->UpdateChat(Messages);
 	}
 }
+
+void ATTPlayerController::DisablePlayerInput()
+{
+	// 이 플레이어 컨트롤러의 입력을 비활성화
+	DisableInput(this);
+}
+
+void ATTPlayerController::EnablePlayerInput()
+{
+	// 이 플레이어 컨트롤러의 입력을 다시 활성화
+	EnableInput(this);
+}

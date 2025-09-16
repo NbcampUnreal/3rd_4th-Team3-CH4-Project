@@ -21,6 +21,12 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SendChatMessage(const FString& Message);
 
+	// 플레이어의 입력을 비활성화
+	void DisablePlayerInput();
+
+	// 플레이어의 입력을 다시 활성화
+	void EnablePlayerInput();
+
 protected:
 	// 서버로부터 PlayerState를 성공적으로 받았을 때 클라이언트에서 호출
 	virtual void OnRep_PlayerState() override;

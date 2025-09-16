@@ -4,7 +4,7 @@
 ATTGameState::ATTGameState()
 {
 	// 초기 시간 설정 (10분)
-	RemainingTime = 600;
+	RemainingTime = 60;
 
 	// 카운트다운 시간 초기값 설정 (0으로 시작)
 	RoleAssignmentCountdownTime = 0;
