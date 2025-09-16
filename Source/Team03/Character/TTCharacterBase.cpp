@@ -1,6 +1,7 @@
 // TTCharacterBase.cpp
 
 #include "Character/TTCharacterBase.h"
+#include "OutGameUI/TTGameUserSettings.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -126,9 +127,22 @@ void ATTCharacterBase::StopJump(const FInputActionValue& Value)
 void ATTCharacterBase::Look(const FInputActionValue& Value)
 {
 	FVector2D LookInput = Value.Get<FVector2D>();
-
-	AddControllerYawInput(LookInput.X);
-	AddControllerPitchInput(LookInput.Y);
+	
+	// 만든 GetTTGameUserSettings() 함수를 통해 설정 객체 가져옴
+	UTTGameUserSettings* UserSettings = UTTGameUserSettings::GetTTGameUserSettings();
+	if (UserSettings)
+	{
+		// 저장된 마우스 감도 값을 가져와서 마우스 입력 값에 곱해준다
+		const float MouseSensitivity = UserSettings->GetMouseSensitivity();
+		AddControllerYawInput(LookInput.X * MouseSensitivity);
+		AddControllerPitchInput(LookInput.Y * MouseSensitivity);
+	}
+	// 만약 설정 객체를 가져오는 데 실패하면, 기본값으로 작동
+	else 
+	{
+		AddControllerYawInput(LookInput.X);
+		AddControllerPitchInput(LookInput.Y);
+	}
 }
 
 void ATTCharacterBase::StartSprint(const FInputActionValue& Value)
