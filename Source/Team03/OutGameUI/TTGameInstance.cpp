@@ -69,7 +69,7 @@ void UTTGameInstance::CreateRoomSession()
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bIsDedicated = true;  // 데디케이트 서버 세션임을 명시
 		SessionSettings.bIsLANMatch = true;   // LAN 환경에서 테스트하기 위해 true로 설정
-		SessionSettings.NumPublicConnections = 4;   // 최대 인원	
+		SessionSettings.NumPublicConnections = 3;   // 최대 인원	
 		SessionSettings.bShouldAdvertise = true;  // 다른 클라이언트가 이 세션을 검색할 수 있도록 공개
 		SessionSettings.bUsesPresence = true;
 		SessionSettings.bAllowJoinInProgress = false; // 게임 시작시 합류 불가

@@ -42,7 +42,12 @@ void UTTMainMenuWidget::OnStartButtonClicked()
 
 void UTTMainMenuWidget::OnOptionButtonClicked()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Option Button Clicked!"));
+    ATTUI_PlayerController* PlayerController = Cast<ATTUI_PlayerController>(GetOwningPlayer());
+    if (PlayerController)
+    {
+        // 컨트롤러에게 옵션 메뉴를 보여달라고 요청
+        PlayerController->ShowOptionsMenu();
+    }
 }
 
 void UTTMainMenuWidget::OnExitButtonClicked()
