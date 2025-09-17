@@ -8,6 +8,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ATTCharacterPolice::ATTCharacterPolice():
 	bCanAttack(true),
@@ -68,23 +69,8 @@ void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 	// && !GetCharacterMovement()->IsFalling()
 	if(bCanAttack)
 	{
-		bCanAttack = false;
-
-		//GetCharacterMovement()->SetMovementMode(MOVE_None);
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
-										{
-											bCanAttack = true;
-											GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-										}), MeleeAttackMontagePlayTime, false);
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if(IsValid(AnimInstance) == true)
-		{
-			AnimInstance->Montage_Play(MeleeAttackMontage);
-		}
+		ServerRPCMeleeAttack();
 	}
-    UE_LOG(LogTemp, Error, TEXT("Attack Mapping!"));
 }
 
 float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -96,38 +82,41 @@ float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 
 void ATTCharacterPolice::CheckMeleeAttackHit()
 {
-	TArray<FHitResult> OutHitResults;
-	TSet<ACharacter*> DamagedCharacters;
-	FCollisionQueryParams Params(NAME_None, false, this);
-
-	const float MeleeAttackRange = 50.f;
-	const float MeleeAttackRadius = 50.f;
-	const float MeleeAttackDamage = 10.f;
-	const FVector Forward = GetActorForwardVector();
-	const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
-	const FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
-
-	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(MeleeAttackRadius), Params);
-	if(bIsHitDetected == true)
+	if(HasAuthority())
 	{
-		for(auto const& OutHitResult : OutHitResults)
+		TArray<FHitResult> OutHitResults;
+		TSet<ACharacter*> DamagedCharacters;
+		FCollisionQueryParams Params(NAME_None, false, this);
+
+		const float MeleeAttackRange = 50.f;
+		const float MeleeAttackRadius = 50.f;
+		const float MeleeAttackDamage = 10.f;
+		const FVector Forward = GetActorForwardVector();
+		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
+		const FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
+
+		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(MeleeAttackRadius), Params);
+		if(bIsHitDetected == true)
 		{
-			ACharacter* DamagedCharacter = Cast<ACharacter>(OutHitResult.GetActor());
-			if(IsValid(DamagedCharacter) == true)
+			for(auto const& OutHitResult : OutHitResults)
 			{
-				DamagedCharacters.Add(DamagedCharacter);
+				ACharacter* DamagedCharacter = Cast<ACharacter>(OutHitResult.GetActor());
+				if(IsValid(DamagedCharacter) == true)
+				{
+					DamagedCharacters.Add(DamagedCharacter);
+				}
+			}
+
+			FDamageEvent DamageEvent;
+			for(auto const& DamagedCharacter : DamagedCharacters)
+			{
+				DamagedCharacter->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
 			}
 		}
 
-		FDamageEvent DamageEvent;
-		for(auto const& DamagedCharacter : DamagedCharacters)
-		{
-			DamagedCharacter->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
-		}
+		FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
+		DrawDebugMeleeAttack(DrawColor, Start, End, Forward);
 	}
-
-	FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
-	DrawDebugMeleeAttack(DrawColor, Start, End, Forward);
 }
 
 void ATTCharacterPolice::DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward)
@@ -137,4 +126,62 @@ void ATTCharacterPolice::DrawDebugMeleeAttack(const FColor& DrawColor, FVector T
 	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
 	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
 	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
+}
+
+void ATTCharacterPolice::PlayMeleeAttackMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if(IsValid(AnimInstance) == true)
+	{
+		AnimInstance->StopAllMontages(0.f);
+		AnimInstance->Montage_Play(MeleeAttackMontage);
+	}
+}
+
+void ATTCharacterPolice::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, bCanAttack);
+}
+
+void ATTCharacterPolice::OnRep_CanAttack()
+{
+	if(bCanAttack == true)
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+	else
+	{
+		//GetCharacterMovement()->SetMovementMode(MOVE_None);
+	}
+}
+
+void ATTCharacterPolice::MulticastRPCMeleeAttack_Implementation()
+{
+	if(HasAuthority() == true)
+	{
+		bCanAttack = false;
+
+		OnRep_CanAttack();
+
+		FTimerHandle Handle;
+		GetWorld()->GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([&]()
+											   {
+												   bCanAttack = true;
+												   OnRep_CanAttack();
+											   }), MeleeAttackMontagePlayTime, false);
+	}
+
+	PlayMeleeAttackMontage();
+}
+
+bool ATTCharacterPolice::ServerRPCMeleeAttack_Validate()
+{
+	return true;
+}
+
+void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation()
+{
+	MulticastRPCMeleeAttack();
 }

@@ -62,13 +62,34 @@ public:
 private:
 	void DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward);
 
-protected:
-	bool bCanAttack;
+	void PlayMeleeAttackMontage();
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UAnimMontage> MeleeAttackMontage;
 
 	float MeleeAttackMontagePlayTime;
+
+#pragma endregion
+
+#pragma region Replication
+
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+private:
+	UFUNCTION()
+	void OnRep_CanAttack();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerRPCMeleeAttack();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRPCMeleeAttack();
+
+protected:
+	UPROPERTY(ReplicatedUsing=OnRep_CanAttack)
+	uint8 bCanAttack : 1;
 
 #pragma endregion
 };
