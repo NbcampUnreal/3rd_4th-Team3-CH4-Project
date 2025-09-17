@@ -29,3 +29,11 @@ void UTTPCAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bShouldMove = ((OwnerCharacterMovementComponent->GetCurrentAcceleration().IsNearlyZero()) == false) && (3.f < GroundSpeed);
 	bIsFalling = OwnerCharacterMovementComponent->IsFalling();
 }
+
+void UTTPCAnimInstance::AnimNotify_CheckMeleeAttackHit()
+{
+	if(IsValid(OwnerCharacter))
+	{
+		OwnerCharacter->CheckMeleeAttackHit();
+	}
+}

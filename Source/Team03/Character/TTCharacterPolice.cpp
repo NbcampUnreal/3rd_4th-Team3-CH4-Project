@@ -5,8 +5,13 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Engine/DamageEvents.h"
+#include "Components/CapsuleComponent.h"
 
-ATTCharacterPolice::ATTCharacterPolice()
+ATTCharacterPolice::ATTCharacterPolice():
+	bCanAttack(true),
+	MeleeAttackMontagePlayTime(0.f)
 {
     // 경찰 캐릭터 무브먼트 관련 수치 조정
     BaseWalkSpeed = 500;
@@ -26,8 +31,14 @@ void ATTCharacterPolice::BeginPlay()
 		UEnhancedInputLocalPlayerSubsystem* SubSystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
 		if(IsValid(SubSystem))
 		{
+			// 경찰 IMC 1번 슬롯 연결
 			SubSystem->AddMappingContext(PoliceCharacterIMC, 1);
 		}
+	}
+
+	if(IsValid(MeleeAttackMontage))
+	{
+		MeleeAttackMontagePlayTime = MeleeAttackMontage->GetPlayLength()/2;
 	}
 }
 
@@ -54,5 +65,76 @@ float ATTCharacterPolice::GetSprintWalkSpeed() const
 
 void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 {
+	// && !GetCharacterMovement()->IsFalling()
+	if(bCanAttack)
+	{
+		bCanAttack = false;
+
+		//GetCharacterMovement()->SetMovementMode(MOVE_None);
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]() -> void
+										{
+											bCanAttack = true;
+											GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+										}), MeleeAttackMontagePlayTime, false);
+
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if(IsValid(AnimInstance) == true)
+		{
+			AnimInstance->Montage_Play(MeleeAttackMontage);
+		}
+	}
     UE_LOG(LogTemp, Error, TEXT("Attack Mapping!"));
+}
+
+float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("TakeDamage: %f"), DamageAmount), true, true, FLinearColor::Green, 5.f);
+
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void ATTCharacterPolice::CheckMeleeAttackHit()
+{
+	TArray<FHitResult> OutHitResults;
+	TSet<ACharacter*> DamagedCharacters;
+	FCollisionQueryParams Params(NAME_None, false, this);
+
+	const float MeleeAttackRange = 50.f;
+	const float MeleeAttackRadius = 50.f;
+	const float MeleeAttackDamage = 10.f;
+	const FVector Forward = GetActorForwardVector();
+	const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
+	const FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
+
+	bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(MeleeAttackRadius), Params);
+	if(bIsHitDetected == true)
+	{
+		for(auto const& OutHitResult : OutHitResults)
+		{
+			ACharacter* DamagedCharacter = Cast<ACharacter>(OutHitResult.GetActor());
+			if(IsValid(DamagedCharacter) == true)
+			{
+				DamagedCharacters.Add(DamagedCharacter);
+			}
+		}
+
+		FDamageEvent DamageEvent;
+		for(auto const& DamagedCharacter : DamagedCharacters)
+		{
+			DamagedCharacter->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
+		}
+	}
+
+	FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
+	DrawDebugMeleeAttack(DrawColor, Start, End, Forward);
+}
+
+void ATTCharacterPolice::DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward)
+{
+	const float MeleeAttackRange = 50.f;
+	const float MeleeAttackRadius = 50.f;
+	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
+	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
+	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
 }
