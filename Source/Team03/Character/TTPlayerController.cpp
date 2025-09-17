@@ -1,9 +1,10 @@
 // TTPlayerController.cpp
 
 #include "Character/TTPlayerController.h"
+#include "Game/TTPlayerState.h"
+#include "Blueprint/UserWidget.h"
 #include "InGameUI/TT_WBP_HUD.h"
 #include "Game/TTGameState.h"
-#include "Game/TTPlayerState.h"
 #include "TimerManager.h"
 
 // 게임 시작 마우스 커서 숨기기 및 게임 전용 입력 모드 설정
@@ -111,4 +112,41 @@ void ATTPlayerController::EnablePlayerInput()
 {
 	// 이 플레이어 컨트롤러의 입력을 다시 활성화
 	EnableInput(this);
+}
+
+void ATTPlayerController::Client_ShowResultUI_Implementation(ETeam WinningTeam)
+{
+	// 자신의 PlayerState를 가져와 현재 팀을 확인
+	ATTPlayerState* TTPlayerState = GetPlayerState<ATTPlayerState>();
+	if (TTPlayerState == nullptr) return;
+
+	ETeam MyTeam = TTPlayerState->Team;
+	TSubclassOf<UUserWidget> ResultWidgetClass = nullptr;
+
+	// 내 팀과 승리 팀을 비교하여 표시할 위젯 클래스를 결정
+	if (MyTeam == ETeam::Police)
+	{
+		ResultWidgetClass = (WinningTeam == ETeam::Police) ? PoliceWinWidgetClass : PoliceLoseWidgetClass;
+	}
+	else if (MyTeam == ETeam::Thief)
+	{
+		ResultWidgetClass = (WinningTeam == ETeam::Thief) ? ThiefWinWidgetClass : ThiefLoseWidgetClass;
+	}
+
+	// 결정된 위젯 클래스가 있다면 화면에 생성하여 표시
+	if (ResultWidgetClass)
+	{
+		// 기존 HUD는 숨기거나 제거
+		if (HUDWidgetInstance)
+		{
+			HUDWidgetInstance->RemoveFromParent();
+		}
+
+		UUserWidget* ResultWidget = CreateWidget<UUserWidget>(this, ResultWidgetClass);
+		ResultWidget->AddToViewport();
+
+		// 결과 UI와 상호작용할 수 있도록 마우스 커서를 표시하고 입력 모드를 변경
+		bShowMouseCursor = true;
+		SetInputMode(FInputModeUIOnly());
+	}
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Game/TT_Team.h"
 #include "TTPlayerController.generated.h"
 
 class UTT_WBP_HUD;
@@ -12,14 +13,18 @@ UCLASS()
 class TEAM03_API ATTPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-public: 
+
+public:
 	void BeginPlay() override;
 	void OnPossess(APawn* InPawn) override;
 
 	// 서버로 채팅 메시지를 전송하는 RPC 함수 선언
 	UFUNCTION(Server, Reliable)
 	void Server_SendChatMessage(const FString& Message);
+
+	// 클라이언트로 게임 결과 UI를 전송
+	UFUNCTION(Client, Reliable)
+	void Client_ShowResultUI(ETeam WinningTeam);
 
 	// 플레이어의 입력을 비활성화
 	void DisablePlayerInput();
@@ -52,4 +57,17 @@ private:
 
 	// HUD 업데이트 타이머를 관리할 핸들
 	FTimerHandle HUDUpdateTimerHandle;
+
+	// 게임 결과 위젯 변수들
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PoliceWinWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PoliceLoseWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> ThiefWinWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> ThiefLoseWidgetClass;
 };

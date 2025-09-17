@@ -1,5 +1,7 @@
 #include "Game/TTGameState.h"
 #include "Net/UnrealNetwork.h"
+#include "Character/TTPlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 ATTGameState::ATTGameState()
 {
@@ -8,6 +10,9 @@ ATTGameState::ATTGameState()
 
 	// 카운트다운 시간 초기값 설정 (0으로 시작)
 	RoleAssignmentCountdownTime = 0;
+
+	//승리 팀 초기값 설정
+	WinningTeam = ETeam::None;
 }
 
 void ATTGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -18,6 +23,7 @@ void ATTGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ATTGameState, RemainingTime);
 	DOREPLIFETIME(ATTGameState, RoleAssignmentCountdownTime);
 	DOREPLIFETIME(ATTGameState, ChatMessages);
+	DOREPLIFETIME(ATTGameState, WinningTeam);
 }
 
 void ATTGameState::AddChatMessage(const FString& Message)
@@ -35,4 +41,18 @@ void ATTGameState::OnRep_ChatMessages()
 {
 	// 배열이 업데이트되었음을 UI에게 방송(Broadcast)
 	OnChatUpdated.Broadcast(ChatMessages);
+}
+
+void ATTGameState::OnRep_WinningTeam()
+{
+	// 월드에 있는 모든 플레이어 컨트롤러를 순회
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ATTPlayerController* PC = Cast<ATTPlayerController>(It->Get());
+		if (PC)
+		{
+			// 각 컨트롤러에게 결과 UI를 표시하라는 Client RPC를 호출
+			PC->Client_ShowResultUI(WinningTeam);
+		}
+	}
 }

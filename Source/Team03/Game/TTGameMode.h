@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "Game/TT_Team.h"
 #include "TTGameMode.generated.h"
 
 // .h 파일에서는 class 키워드로 전방 선언하여 헤더 파일을 가볍게 유지합니다.
@@ -45,6 +46,9 @@ private:
 
 	// 모든 플레이어의 입력을 다시 활성화하는 함수
 	void EnableAllPlayerInputs();
+
+	//
+	void EndGame(ETeam Winner);
 
 	// 카운트다운이 시작되었는지 여부를 저장하는 변수
 	bool bIsCountdownStarted = false;

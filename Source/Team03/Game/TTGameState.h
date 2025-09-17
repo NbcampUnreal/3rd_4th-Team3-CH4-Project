@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "Game/TT_Team.h"
 #include "TTGameState.generated.h"
 
 // 델리게이트 선언: 채팅 메시지 배열이 업데이트될 때 UI에게 알려줄 신호
@@ -11,7 +12,7 @@ UCLASS()
 class TEAM03_API ATTGameState : public AGameState
 {
 	GENERATED_BODY()
-	
+
 public:
 	ATTGameState();
 
@@ -32,12 +33,20 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Replicated, Category = "Game")
 	int32 RoleAssignmentCountdownTime;
 
+	// 승리한 팀을 저장할 변수
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, ReplicatedUsing = OnRep_WinningTeam, Category = "Game")
+	ETeam WinningTeam;
+
 private:
 	// 채팅 메시지를 저장할 배열
 	UPROPERTY(ReplicatedUsing = OnRep_ChatMessages)
 	TArray<FString> ChatMessages;
 
-	// ChatMessages 배열이 복제될 때 클라이언트에서 호출될 함수
+	// ChatMessages 배열이 복제될 때 클라이언트에서 함수 호출
 	UFUNCTION()
 	void OnRep_ChatMessages();
+
+	// WinningTeam 변수가 복제될 때 클라이언트에서 함수 호출
+	UFUNCTION()
+	void OnRep_WinningTeam();
 };

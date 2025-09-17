@@ -168,12 +168,8 @@ void ATTGameMode::UpdateGameTimer()
 		// 시간이 다 되었다면
 		if (TTGameState->RemainingTime <= 0)
 		{
-			// 타이머를 스탑
-			GetWorld()->GetTimerManager().ClearTimer(GameTimerHandle);
-
 			// 도둑 승리
-			UE_LOG(LogTemp, Warning, TEXT("Game Over: Thieves Win!"));
-			// 여기에 게임 종료 및 결과 UI 표시 로직을 추가
+			EndGame(ETeam::Thief);
 		}
 	}
 }
@@ -198,12 +194,25 @@ void ATTGameMode::OnThiefCaught()
 	// 만약 남은 도둑이 없다면
 	if (ThievesRemaining == 0)
 	{
-		// 타이머 스톱
-		GetWorld()->GetTimerManager().ClearTimer(GameTimerHandle);
-
-		// 경찰 승리 로그
-		UE_LOG(LogTemp, Warning, TEXT("Game Over: Police Wins!"));
-		// 여기에 게임 종료 및 결과 UI 표시 로직을 추가
+		EndGame(ETeam::Police);
 	}
 }
 
+void ATTGameMode::EndGame(ETeam Winner)
+{
+	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+	if (TTGameState)
+	{
+		// GameState에 승리 팀을 기록 (모든 클라이언트로 전파)
+		TTGameState->WinningTeam = Winner;
+	}
+
+	// 모든 타이머 스탑
+	GetWorld()->GetTimerManager().ClearTimer(GameTimerHandle);
+
+	UE_LOG(LogTemp, Warning, TEXT("Game Over! Winner: %s"), *(UEnum::GetValueAsString(Winner)));
+
+	// AGameMode의 EndMatch() 함수를 호출하여 경기를 공식적으로 종료
+	// EndMatch()는 모든 플레이어의 입력을 막는 등의 처리를 도와줌
+	Super::EndMatch();
+}
