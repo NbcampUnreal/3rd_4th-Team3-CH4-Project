@@ -11,7 +11,7 @@ UTTGameUserSettings::UTTGameUserSettings()
 {
 	SoundVolume = 0.5f;
 	MouseSensitivity = 1.0f;
-	GammaValue = 2.25f;
+	GammaValue = 2.75f;
 }
 
 // static 함수 구현

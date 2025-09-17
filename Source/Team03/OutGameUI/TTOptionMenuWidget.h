@@ -29,6 +29,8 @@ private:
 	USlider* MouseSensitivitySlider;
 	UPROPERTY(meta=(BindWidget))
 	UButton* BackButton;
+	UPROPERTY(meta = (BindWidget))
+	UButton* SaveButton;
 
 	// 슬라이더 값 변경 시 호출될 함수들
 	UFUNCTION()
@@ -38,7 +40,9 @@ private:
 	UFUNCTION()
 	void OnMouseSensitivityChanged(float Value);
 	
-
+	// 저장 누르면 호출될 함수
+	UFUNCTION()
+	void OnSaveButtonClicked();
 	// 뒤로가기 누르면 호출될 함수
 	UFUNCTION()
 	void OnBackButtonClicked();

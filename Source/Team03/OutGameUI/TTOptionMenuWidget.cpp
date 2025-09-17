@@ -37,6 +37,7 @@ void UTTOptionMenuWidget::NativeConstruct()
 	GammaSlider->OnValueChanged.AddDynamic(this, &UTTOptionMenuWidget::OnGammaChanged);
 	MouseSensitivitySlider->OnValueChanged.AddDynamic(this, &UTTOptionMenuWidget::OnMouseSensitivityChanged);
 	BackButton->OnClicked.AddDynamic(this, &UTTOptionMenuWidget::OnBackButtonClicked);
+	SaveButton->OnClicked.AddDynamic(this, &UTTOptionMenuWidget::OnSaveButtonClicked);
 }
 
 // --- UI 값이 변경되면 실제 값으로 변환하여 설정 객체에 임시로 저장합니다. ---
@@ -60,17 +61,22 @@ void UTTOptionMenuWidget::OnMouseSensitivityChanged(float Value)
 	// UI 값(0~100) -> 실제 값(0.5~1.5)
 	if (UserSettings) UserSettings->SetMouseSensitivity((Value / 100.0f) * 1.0f + 0.5f);
 }
-
-// --- '뒤로가기' 버튼: 변경된 모든 사항을 파일에 최종 저장하고 메인 메뉴로 돌아갑니다. ---
-void UTTOptionMenuWidget::OnBackButtonClicked()
+// 저장 버튼 입력시 설정 적용 및 저장
+void UTTOptionMenuWidget::OnSaveButtonClicked()
 {
 	UTTGameUserSettings* UserSettings = UTTGameUserSettings::GetTTGameUserSettings();
 	if (UserSettings)
 	{
-		// ApplySettings를 호출하면 SaveConfig() 및 감마 적용까지 모두 처리됩니다.
 		UserSettings->ApplySettings(false);
+		UE_LOG(LogTemp, Warning, TEXT("Settings Saved!"));
 	}
-
+}
+// 뒤로가기 버튼 입력시 메인 메뉴UI 
+void UTTOptionMenuWidget::OnBackButtonClicked()
+{
 	ATTUI_PlayerController* PlayerController = Cast<ATTUI_PlayerController>(GetOwningPlayer());
-	if (PlayerController) PlayerController->ShowMainMenuUI();
+	if (PlayerController)
+	{
+		PlayerController->ShowMainMenuUI();
+	}
 }
