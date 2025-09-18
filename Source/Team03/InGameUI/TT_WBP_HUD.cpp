@@ -47,7 +47,7 @@ void UTT_WBP_HUD::ShowPreRoundUI(bool bShow)
 	{
 		PreRoundCountdownText->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	}
-	// 카운트다운이 보일 때는 메인 타이머는 숨깁니다.
+	// 카운트다운이 보일 때는 메인 타이머는 숨김
 	if (TimerText)
 	{
 		TimerText->SetVisibility(bShow ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
@@ -58,7 +58,7 @@ void UTT_WBP_HUD::UpdateChat(const TArray<FString>& Messages)
 {
 	if (ChatScrollBox)
 	{
-		// 채팅창을 새로 그리기 전에 기존 내용을 모두 지웁니다.
+		// 채팅창을 새로 그리기 전에 기존 내용을 모두 지움
 		ChatScrollBox->ClearChildren();
 
 		// 모든 메시지를 순회하며 TextBlock 위젯으로 만들어 추가
@@ -68,7 +68,10 @@ void UTT_WBP_HUD::UpdateChat(const TArray<FString>& Messages)
 			if (NewMessage)
 			{
 				NewMessage->SetText(FText::FromString(Msg));
-				// 여기에 폰트, 색상 등 스타일을 설정
+
+				NewMessage->SetAutoWrapText(true); // 자동 줄 바꿈 활성화
+				NewMessage->SetColorAndOpacity(FSlateColor(FLinearColor::Black)); // 텍스트 색상을 검은색으로 설정
+
 				ChatScrollBox->AddChild(NewMessage);
 			}
 		}
