@@ -3,6 +3,7 @@
 
 #include "TTMainMenuWidget.h"
 
+#include "OutGameUI/TTConfirmPopupWidget.h"
 #include "OutGameUI/TTUI_PlayerController.h" 
 #include "OutGameUI/TTGameInstance.h"
 #include "Components/Button.h"
@@ -52,11 +53,18 @@ void UTTMainMenuWidget::OnOptionButtonClicked()
 
 void UTTMainMenuWidget::OnExitButtonClicked()
 {
-
-    UTTGameInstance* GameInstance = Cast<UTTGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-    if (GameInstance)
+    if (ConfirmPopupClass)
     {
-        // GameInstance에게 정리 및 종료를 요청합니다.
-        GameInstance->CleanupAndExit();
+        UTTConfirmPopupWidget* Popup = CreateWidget<UTTConfirmPopupWidget>(this, ConfirmPopupClass);
+        if (Popup)
+        {
+            Popup->SetExitButton(ExitButton);
+            Popup->AddToViewport(); // 팝업창을 화면에 띄웁니다.
+        }
     }
+    if (ExitButton)
+    {
+        ExitButton->SetIsEnabled(false);
+    }
+
 }

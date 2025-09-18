@@ -28,7 +28,15 @@ private:
 
     UPROPERTY(meta = (BindWidget))
     UButton* ExitButton;
-    
+
+    UPROPERTY(EditDefaultsOnly, Category = "Popup")
+    TSubclassOf<class UTTConfirmPopupWidget> ConfirmPopupClass;
+
+    UPROPERTY()
+    UButton* ExitButtonRef;
+
+    void SetExitButton(UButton* InButton) { ExitButtonRef = InButton; }
+
     //각 버튼이 클릭 되었을 때 호출되는 함수
     UFUNCTION()
     void OnStartButtonClicked();
