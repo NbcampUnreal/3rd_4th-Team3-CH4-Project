@@ -210,9 +210,29 @@ void ATTGameMode::EndGame(ETeam Winner)
 	// 모든 타이머 스탑
 	GetWorld()->GetTimerManager().ClearTimer(GameTimerHandle);
 
+	// 10초 후에 ReturnToLobby 함수를 호출하는 타이머
+	GetWorld()->GetTimerManager().SetTimer(
+		ReturnToLobbyTimerHandle,
+		this,
+		&ATTGameMode::ReturnToLobby,
+		ReturnToLobbyDelay,
+		false
+	);
+
 	UE_LOG(LogTemp, Warning, TEXT("Game Over! Winner: %s"), *(UEnum::GetValueAsString(Winner)));
 
 	// AGameMode의 EndMatch() 함수를 호출하여 경기를 공식적으로 종료
 	// EndMatch()는 모든 플레이어의 입력을 막는 등의 처리를 도와줌
 	Super::EndMatch();
+}
+
+void ATTGameMode::ReturnToLobby()
+{
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		// 세션을 파괴하고 모든 플레이어를 메인 메뉴 맵으로 보냄
+		// bSeamless (심리스 여부)는 false로 설정하여 로딩 화면이 뜨도록 합니다.
+		World->ServerTravel("/Game/TT/Maps/OutGameUI/MainMenu_Map", false, false);
+	}
 }

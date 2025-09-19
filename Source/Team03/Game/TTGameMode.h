@@ -34,6 +34,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
 	float MatchStartDelay = 20.0f;
 
+	// 게임 종료 후 로비로 돌아가기까지의 딜레이 시간
+	UPROPERTY(EditDefaultsOnly, Category = "Game Rules")
+	float ReturnToLobbyDelay = 10.0f;
+
 private:
 	// 포지션 배정 카운트다운을 1초마다 업데이트할 함수
 	void UpdatePreRoundTimer();
@@ -47,8 +51,11 @@ private:
 	// 모든 플레이어의 입력을 다시 활성화하는 함수
 	void EnableAllPlayerInputs();
 
-	//
+	// 게임이 끝났을 때 호출되는 함수
 	void EndGame(ETeam Winner);
+
+	// 모든 플레이어를 로비로 돌려보내는 함수
+	void ReturnToLobby();
 
 	// 카운트다운이 시작되었는지 여부를 저장하는 변수
 	bool bIsCountdownStarted = false;
@@ -58,6 +65,9 @@ private:
 
 	// 게임 타이머를 관리할 핸들
 	FTimerHandle GameTimerHandle;
+
+	// 로비로 돌아가는 타이머를 관리할 핸들
+	FTimerHandle ReturnToLobbyTimerHandle;
 
 	// 독립적인 랜덤 숫자 생성기
 	FRandomStream RandomStream;
