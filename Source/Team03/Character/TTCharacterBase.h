@@ -11,6 +11,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UTTBaseCharacterInput;
 class UInputMappingContext;
+class ATTWeaponBase;
 
 UCLASS()
 class TEAM03_API ATTCharacterBase : public ACharacter
@@ -90,6 +91,16 @@ private:
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ChangeSpeed)
 	bool bIsSprinting;
+
+#pragma endregion
+
+#pragma region Weapon
+
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
+	TSubclassOf<ATTWeaponBase> DefaultWeaponClass;
+
+	UPROPERTY(VisibleAnywhere, Category="Weapon")
+	ATTWeaponBase* CurrentWeapon;
 
 #pragma endregion
 };

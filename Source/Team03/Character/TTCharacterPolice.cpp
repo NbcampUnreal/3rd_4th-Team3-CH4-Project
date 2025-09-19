@@ -153,7 +153,8 @@ void ATTCharacterPolice::OnRep_CanAttack()
 	}
 	else
 	{
-		//GetCharacterMovement()->SetMovementMode(MOVE_None);
+		// 주석처리하면 움직이면서 때리는거 가능
+		GetCharacterMovement()->SetMovementMode(MOVE_None);
 	}
 }
 
