@@ -11,7 +11,7 @@
 #include "Net/UnrealNetwork.h"
 
 ATTCharacterPolice::ATTCharacterPolice():
-	bCanAttack(true),
+	bCanAttack(1),
 	MeleeAttackMontagePlayTime(0.f)
 {
     // 경찰 캐릭터 무브먼트 관련 수치 조정
@@ -66,8 +66,7 @@ float ATTCharacterPolice::GetSprintWalkSpeed() const
 
 void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 {
-	// && !GetCharacterMovement()->IsFalling()
-	if(bCanAttack)
+	if(bCanAttack && !GetCharacterMovement()->IsFalling())
 	{
 		ServerRPCMeleeAttack();
 	}
@@ -153,7 +152,6 @@ void ATTCharacterPolice::OnRep_CanAttack()
 	}
 	else
 	{
-		// 주석처리하면 움직이면서 때리는거 가능
 		GetCharacterMovement()->SetMovementMode(MOVE_None);
 	}
 }
