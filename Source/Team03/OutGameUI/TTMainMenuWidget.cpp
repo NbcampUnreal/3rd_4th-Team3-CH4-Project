@@ -7,6 +7,7 @@
 #include "OutGameUI/TTUI_PlayerController.h" 
 #include "OutGameUI/TTGameInstance.h"
 #include "Components/Button.h"
+#include "Components/EditableTextBox.h"
 #include "Kismet/GameplayStatics.h"
 
 void UTTMainMenuWidget::NativeConstruct()
@@ -27,12 +28,23 @@ void UTTMainMenuWidget::NativeConstruct()
     {
         ExitButton->OnClicked.AddDynamic(this, &UTTMainMenuWidget::OnExitButtonClicked);
     }
+
+    if (Player)
+    {
+        Player->OnTextChanged.AddDynamic(this, &UTTMainMenuWidget::OnPlayerNameTextChanged);
+    }
 }
 
 
-// 지금은 로그만 출력하도록 설정 각 버튼에 맞는 기능 구현 필요
 void UTTMainMenuWidget::OnStartButtonClicked()
 {
+    UTTGameInstance* GameInstance = Cast<UTTGameInstance>(GetGameInstance());
+    if (GameInstance && Player)
+    {
+        // 입력창의 텍스트를 가져와서 GameInstance에 저장
+        GameInstance->PlayerName = Player->GetText().ToString();
+    }
+
     ATTUI_PlayerController* UI_PlayerController = Cast<ATTUI_PlayerController>(GetOwningPlayer());
     if (UI_PlayerController)
     {
@@ -67,4 +79,17 @@ void UTTMainMenuWidget::OnExitButtonClicked()
         ExitButton->SetIsEnabled(false);
     }
 
+}
+
+// TextBox 글자 수 제한
+void UTTMainMenuWidget::OnPlayerNameTextChanged(const FText& Text)
+{
+    const int32 MaxLength = 8; // 글자 수
+    FString CurrentText = Text.ToString();
+    if (CurrentText.Len() > MaxLength && Player)
+    {
+        // 최대 길이를 초과하면 잘라서 다시 설정
+        FString TrimmedText = CurrentText.Left(MaxLength);
+        Player->SetText(FText::FromString(TrimmedText));
+    }
 }

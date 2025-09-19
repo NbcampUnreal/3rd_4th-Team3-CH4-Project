@@ -63,6 +63,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnServerListUpdated OnServerListUpdated;
+
+	// 모든 레벨에서 접근할 수 있도록 플레이어 이름을 저장할 변수
+	UPROPERTY(BlueprintReadWrite)
+	FString PlayerName;
 	
 private:
 	

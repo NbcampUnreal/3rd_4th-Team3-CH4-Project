@@ -6,6 +6,8 @@
 #include "InGameUI/TT_WBP_HUD.h"
 #include "Game/TTGameState.h"
 #include "TimerManager.h"
+#include "OutGameUI/TTGameInstance.h"
+#include "GameFramework/PlayerState.h"
 
 // 게임 시작 마우스 커서 숨기기 및 게임 전용 입력 모드 설정
 void ATTPlayerController::BeginPlay()
@@ -13,6 +15,15 @@ void ATTPlayerController::BeginPlay()
 	Super::BeginPlay();
 	SetInputMode(FInputModeGameOnly());
 	bShowMouseCursor = false;
+
+	// GameInstance에서 메인 메뉴 UI가 저장해둔 이름을 가져옴
+	UTTGameInstance* GameInstance = Cast<UTTGameInstance>(GetGameInstance());
+	// 이름이 비어있지 않은지 확인
+	if (GameInstance && !GameInstance->PlayerName.IsEmpty())
+	{
+		// 서버에게 내 이름을 이걸로 설정해달라고 요청(RPC 호출)
+		Server_SetPlayerName(GameInstance->PlayerName);
+	}
 }
 // 서버 로그에 어떤 폰을 소유했는지 출력
 void ATTPlayerController::OnPossess(APawn* InPawn)
@@ -148,5 +159,16 @@ void ATTPlayerController::Client_ShowResultUI_Implementation(ETeam WinningTeam)
 		// 결과 UI와 상호작용할 수 있도록 마우스 커서를 표시하고 입력 모드를 변경
 		bShowMouseCursor = true;
 		SetInputMode(FInputModeUIOnly());
+	}
+}
+
+// 플레이어 이름
+void ATTPlayerController::Server_SetPlayerName_Implementation(const FString& NewName)
+{
+	// 서버에서 이 플레이어의 PlayerState를 가져옴
+	if (PlayerState)
+	{
+		// PlayerState의 이름을 변경하고 이 변경사항은 모든 클라이언트에게 자동으로 복제
+		PlayerState->SetPlayerName(NewName);
 	}
 }

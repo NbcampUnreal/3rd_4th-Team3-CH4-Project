@@ -29,6 +29,10 @@ private:
     UPROPERTY(meta = (BindWidget))
     UButton* ExitButton;
 
+    // 블루프린트의 EditableTextBox와 연결될 변수
+    UPROPERTY(meta = (BindWidget))
+    class UEditableTextBox* Player;
+
     UPROPERTY(EditDefaultsOnly, Category = "Popup")
     TSubclassOf<class UTTConfirmPopupWidget> ConfirmPopupClass;
 
@@ -46,4 +50,7 @@ private:
 
     UFUNCTION()
     void OnExitButtonClicked();
+
+    UFUNCTION()
+    void OnPlayerNameTextChanged(const FText& Text);
 };
