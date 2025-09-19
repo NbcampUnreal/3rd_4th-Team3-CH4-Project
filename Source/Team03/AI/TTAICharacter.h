@@ -27,6 +27,8 @@ public:
 	UFUNCTION()
 	void OnRep_AppearanceIndex();
 
+	void EnterRagdoll();
+
 protected:
 	virtual void BeginPlay() override;
 

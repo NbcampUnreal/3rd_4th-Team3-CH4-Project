@@ -4,6 +4,8 @@
 #include "Animation/AnimInstance.h"
 #include "AI/TTAIDataAsset.h"
 #include "Animation/AnimMontage.h"
+#include "AIController.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATTAICharacter::ATTAICharacter()
@@ -50,23 +52,38 @@ void ATTAICharacter::OnRep_AppearanceIndex()
 	GetMesh()->SetSkeletalMesh(Arr[AppearanceIndex]);
 }
 
+void ATTAICharacter::EnterRagdoll()
+{
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	if (!MeshComp) return;
+
+	MeshComp->SetCollisionProfileName(TEXT("Ragdoll"));
+	MeshComp->SetAllBodiesSimulatePhysics(true);
+	MeshComp->WakeAllRigidBodies();
+
+	bUseControllerRotationYaw = false;
+}
+
 void ATTAICharacter::OnRep_IsDead()
 {
 	if (bIsDead)
 	{
-		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-		{
-			if (DeathMontage)
-			{
-				AnimInstance->Montage_Play(DeathMontage, 1.0f);
-			}
-		}
+		EnterRagdoll();
 	}
 }
 
 float ATTAICharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (HasAuthority() == false) return 0.0f;
+
+	if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+	{
+		MoveComp->StopMovementImmediately();
+	}
+	if (AAIController* AICon = Cast<AAIController>(Controller))
+	{
+		AICon->StopMovement();
+	}
 
 	Die();
 
@@ -82,5 +99,7 @@ void ATTAICharacter::Die()
 
 	OnRep_IsDead();
 
-	SetLifeSpan(5.0f);
+	EnterRagdoll();
+
+	SetLifeSpan(3.0f);
 }
