@@ -18,7 +18,10 @@ public:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	// 경찰이 도둑을 잡았을 때 호출할 함수 (나중에 사용할꺼임)
+	// 플레이어가 이탈했을 때 호출되는 함수
+	virtual void Logout(AController* Exiting) override;
+
+	// 경찰이 도둑을 잡았을 때 호출할 함수
 	void OnThiefCaught();
 
 protected:

@@ -41,8 +41,91 @@ void ATTGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 }
 
+void ATTGameMode::Logout(AController* Exiting)
+{
+	ATTGameState* TTGameState = GetGameState<ATTGameState>();
+	// 퇴장하는 컨트롤러로부터 PlayerState가져오기
+	ATTPlayerState* ExitingPlayerState = Exiting ? Exiting->GetPlayerState<ATTPlayerState>() : nullptr;
+
+	// PlayerState나 GameState가 유효하지 않으면 기본 로직만 처리하고 종료
+	if (ExitingPlayerState == nullptr || TTGameState == nullptr)
+	{
+		Super::Logout(Exiting);
+		return;
+	}
+
+	const FString PlayerName = ExitingPlayerState->GetPlayerName();
+	const ETeam PlayerTeam = ExitingPlayerState->Team;
+
+	// 다른 플레이어들에게 퇴장 사실 알림
+	TTGameState->AddChatMessage(FString::Printf(TEXT("[System] %s has left the game."), *PlayerName));
+
+	// 승리/패배 조건을 미리 확인
+	bool bShouldEndGame = false;
+	ETeam WinningTeam = ETeam::None;
+
+	// 역할이 배정된 후에만 승패를 확인
+	if (PlayerTeam != ETeam::None)
+	{
+		// 경찰이 나간 경우
+		if (PlayerTeam == ETeam::Police)
+		{
+			bShouldEndGame = true;
+			WinningTeam = ETeam::Thief;
+			UE_LOG(LogTemp, Warning, TEXT("Police player left. Thieves win."));
+		}
+		// 도둑이 나간 경우
+		else if (PlayerTeam == ETeam::Thief)
+		{
+			// 현재 게임에 있는 도둑의 수를 체크
+			int32 CurrentThiefCount = 0;
+			for (TObjectPtr<APlayerState> PS : TTGameState->PlayerArray)
+			{
+				ATTPlayerState* CurrentPlayerState = Cast<ATTPlayerState>(PS);
+				if (CurrentPlayerState && CurrentPlayerState->Team == ETeam::Thief)
+				{
+					CurrentThiefCount++;
+				}
+			}
+
+			// 현재 도둑 수가 1명 이하라면 (즉, 나가는 사람이 마지막 도둑이라면)
+			if (CurrentThiefCount <= 1)
+			{
+				bShouldEndGame = true;
+				WinningTeam = ETeam::Police;
+				UE_LOG(LogTemp, Warning, TEXT("Last thief left. Police win."));
+			}
+		}
+	}
+
+	// 엔진의 기본 Logout 처리를 먼저 수행합니다.
+	Super::Logout(Exiting);
+
+	// 미리 확인해둔 결과에 따라 게임을 종료합니다.
+	if (bShouldEndGame)
+	{
+		EndGame(WinningTeam);
+	}
+}
+
 void ATTGameMode::UpdatePreRoundTimer()
 {
+	if (GetNumPlayers() < NumPlayersToStartMatch)
+	{
+		// 타이머를 멈추고 카운트다운 상태를 리셋
+		GetWorld()->GetTimerManager().ClearTimer(PreRoundTimerHandle);
+		bIsCountdownStarted = false;
+
+		// 모든 플레이어에게 카운트다운이 취소되었음을 알림
+		ATTGameState* const TTGameState = GetGameState<ATTGameState>();
+		if (TTGameState)
+		{
+			TTGameState->RoleAssignmentCountdownTime = 0; // 카운트다운 시간을 0으로 되돌림
+			TTGameState->AddChatMessage(TEXT("player has left. Waiting for more players..."));
+		}
+		return; // 함수를 즉시 종료
+	}
+
 	ATTGameState* const TTGameState = GetGameState<ATTGameState>();
 	if (TTGameState)
 	{
