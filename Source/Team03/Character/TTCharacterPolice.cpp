@@ -247,7 +247,7 @@ void ATTCharacterPolice::ServerRPCPerformMeleeHit_Implementation(ACharacter* InD
 {
 	if(IsValid(InDamagedCharacters) == true)
 	{
-		const float MeleeAttackDamage = 10.f;
+		const float MeleeAttackDamage = 50.f;
 		FDamageEvent DamageEvent;
 		InDamagedCharacters->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
 	}

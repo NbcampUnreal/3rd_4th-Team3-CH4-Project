@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "TTBaseStatComponent.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnCurrentHPChangedDelegate, float /* InCurrentHP */);
+DECLARE_MULTICAST_DELEGATE(FOnOutOfCurrentHPDelegate);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMaxHPChangedDelegate, float /* InMaxHP */);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TEAM03_API UTTBaseStatComponent : public UActorComponent
@@ -15,25 +18,35 @@ class TEAM03_API UTTBaseStatComponent : public UActorComponent
 public:	
 	UTTBaseStatComponent();
 
-	void ApplyDamage(float Damage);
+	float ApplyDamage(float InDamage);
 
-	float GetHP() const { return HP; }
+	float GetCurrentHP() const { return CurrentHP; }
+
+	void SetCurrentHP(float InCurrentHP);
 
 	float GetMaxHP() const { return MaxHP; }
 
+	void SetMaxHP(float InMaxHP);
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+public:
+	UPROPERTY(ReplicatedUsing=OnRep_CurrentHP)
+	float CurrentHP;
+
+	UPROPERTY(ReplicatedUsing=OnRep_MaxHP)
+	float MaxHP;
+
+	FOnCurrentHPChangedDelegate OnCurrentHPChanged;
+
+	FOnOutOfCurrentHPDelegate OnOutOfCurrentHP;
+
+	FOnMaxHPChangedDelegate OnMaxHPChanged;
+
 protected:
-
-	virtual void BeginPlay() override;
-
-protected:
-	UPROPERTY(ReplicatedUsing=OnRep_HP, VisibleAnywhere, Category="Stat")
-	float HP;
-
-	UPROPERTY(EditDefaultsOnly, Category="Stat")
-	float MaxHP = 100.f;
+	UFUNCTION()
+	void OnRep_CurrentHP();
 
 	UFUNCTION()
-	void OnRep_HP();
+	void OnRep_MaxHP();
 };

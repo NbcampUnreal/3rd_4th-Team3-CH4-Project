@@ -3,39 +3,63 @@
 #include "Component/TTBaseStatComponent.h"
 #include "Net/UnrealNetwork.h"
 
-UTTBaseStatComponent::UTTBaseStatComponent()
+UTTBaseStatComponent::UTTBaseStatComponent():
+    CurrentHP(100.f),
+    MaxHP(100.f)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 }
 
-void UTTBaseStatComponent::BeginPlay()
+float UTTBaseStatComponent::ApplyDamage(float InDamage)
 {
-    Super::BeginPlay();
+    const float PreviousHP = CurrentHP;
+    const float ActualDamage = FMath::Clamp<float>(InDamage, 0.f, PreviousHP);
 
-    // 서버에서만 MaxHP 설정
-    if(GetOwnerRole() == ROLE_Authority)
-    {
-        HP = MaxHP;
-    }
+	SetCurrentHP(PreviousHP - ActualDamage);
+
+	UE_LOG(LogTemp, Error, TEXT("%f"), GetCurrentHP());
+
+    return ActualDamage;
 }
 
-void UTTBaseStatComponent::OnRep_HP()
+void UTTBaseStatComponent::SetCurrentHP(float InCurrentHP)
 {
-    // 클라이언트에서 HP가 갱신될 때 호출
+    CurrentHP = InCurrentHP;
+    if(CurrentHP <= KINDA_SMALL_NUMBER)
+    {
+        CurrentHP = 0.f;
+		OnOutOfCurrentHP.Broadcast();
+    }
+	OnCurrentHPChanged.Broadcast(CurrentHP);
 }
 
-void UTTBaseStatComponent::ApplyDamage(float Damage)
+void UTTBaseStatComponent::SetMaxHP(float InMaxHP)
 {
-    if(GetOwnerRole() == ROLE_Authority)
+    MaxHP = InMaxHP;
+
+    if(MaxHP < KINDA_SMALL_NUMBER)
     {
-        HP = FMath::Clamp(HP - Damage, 0.f, MaxHP);
+        MaxHP = 0.f;
     }
+
+	OnMaxHPChanged.Broadcast(MaxHP);
 }
 
 void UTTBaseStatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(UTTBaseStatComponent, HP);
+    DOREPLIFETIME(UTTBaseStatComponent, CurrentHP);
+    DOREPLIFETIME(UTTBaseStatComponent, MaxHP);
+}
+
+void UTTBaseStatComponent::OnRep_CurrentHP()
+{
+	OnCurrentHPChanged.Broadcast(CurrentHP);
+}
+
+void UTTBaseStatComponent::OnRep_MaxHP()
+{
+	OnMaxHPChanged.Broadcast(MaxHP);
 }
