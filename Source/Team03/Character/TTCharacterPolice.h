@@ -48,13 +48,6 @@ private:
 
 #pragma region Attack
 public:
-	/*
-	데미지 처리용 함수 개인 메모 추후 삭제
-	DamageAmount : 가해지는 데미지의 양
-	DamageEvent : 데미지의 타입과 추가 데이터를 담은 구조체
-	EventInstigator : 데미지를 가한 주체를 조종하는 컨트롤러
-	DamageCause : 실제로 데미지를 발생시킨 액터
-	*/
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	void CheckMeleeAttackHit();
@@ -82,14 +75,26 @@ private:
 	void OnRep_CanAttack();
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerRPCMeleeAttack();
+	void ServerRPCMeleeAttack(float InStartMeleeAttackTime);
 
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 	void MulticastRPCMeleeAttack();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerRPCPerformMeleeHit(ACharacter* InDamagedCharacters, float InCheckTime);
 
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_CanAttack)
 	uint8 bCanAttack : 1;
+
+	// 지난 근접 공격 시작 시간
+	float LastStartMeleeAttackTime;
+
+	// 근접 공격 시간 차이
+	float MeleeAttackTimeDifference;
+
+	// 근접 공격 허용 최소 시간 간격
+	float MinAllowedTimeForMeleeAttack;
 
 #pragma endregion
 };

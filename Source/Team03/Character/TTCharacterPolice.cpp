@@ -9,10 +9,14 @@
 #include "Engine/DamageEvents.h"
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/GameStateBase.h"
 
 ATTCharacterPolice::ATTCharacterPolice():
 	bCanAttack(1),
-	MeleeAttackMontagePlayTime(0.f)
+	MeleeAttackMontagePlayTime(0.f),
+	LastStartMeleeAttackTime(0.f),
+	MeleeAttackTimeDifference(0.f),
+	MinAllowedTimeForMeleeAttack(0.02f)
 {
     // 경찰 캐릭터 무브먼트 관련 수치 조정
     BaseWalkSpeed = 500;
@@ -68,7 +72,13 @@ void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 {
 	if(bCanAttack && !GetCharacterMovement()->IsFalling())
 	{
-		ServerRPCMeleeAttack();
+		ServerRPCMeleeAttack(GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
+
+		// 서버가 아닌 로컬 클라이언트에서만 애니메이션 재생
+		if(HasAuthority() == false && IsLocallyControlled() == true)
+		{
+			PlayMeleeAttackMontage();
+		}
 	}
 }
 
@@ -79,23 +89,37 @@ float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
+// 근접 공격 히트 체크 함수
 void ATTCharacterPolice::CheckMeleeAttackHit()
 {
-	if(HasAuthority())
+	if(IsLocallyControlled() == true)
 	{
 		TArray<FHitResult> OutHitResults;
 		TSet<ACharacter*> DamagedCharacters;
 		FCollisionQueryParams Params(NAME_None, false, this);
 
+		// 근접 공격 범위, 반경
 		const float MeleeAttackRange = 50.f;
 		const float MeleeAttackRadius = 50.f;
-		const float MeleeAttackDamage = 10.f;
+		
+		// 근접 공격 시작, 종료 지점
 		const FVector Forward = GetActorForwardVector();
 		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
 		const FVector End = Start + GetActorForwardVector() * MeleeAttackRange;
 
-		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(OutHitResults, Start, End, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(MeleeAttackRadius), Params);
-		if(bIsHitDetected == true)
+		// 구체 형태의 충돌 체크
+		bool bIsHitDetected = GetWorld()->SweepMultiByChannel(
+			OutHitResults,
+			Start,
+			End,
+			FQuat::Identity,
+			ECC_Camera,
+			FCollisionShape::MakeSphere(MeleeAttackRadius),
+			Params
+		);
+
+		// OutHitResults 배열에 충돌된 액터들 중 ACharacter 타입만 필터링하여 데미지 적용
+		if(!OutHitResults.IsEmpty())
 		{
 			for(auto const& OutHitResult : OutHitResults)
 			{
@@ -105,11 +129,12 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 					DamagedCharacters.Add(DamagedCharacter);
 				}
 			}
-
+			
 			FDamageEvent DamageEvent;
 			for(auto const& DamagedCharacter : DamagedCharacters)
 			{
-				DamagedCharacter->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
+				// 한 번에 한 캐릭터에게만 데미지 적용
+				ServerRPCPerformMeleeHit(DamagedCharacter, GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
 			}
 		}
 
@@ -118,15 +143,18 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 	}
 }
 
+// 근접 공격 디버그 드로잉 함수
 void ATTCharacterPolice::DrawDebugMeleeAttack(const FColor& DrawColor, FVector TraceStart, FVector TraceEnd, FVector Forward)
 {
 	const float MeleeAttackRange = 50.f;
 	const float MeleeAttackRadius = 50.f;
 	FVector CapsuleOrigin = TraceStart + (TraceEnd - TraceStart) * 0.5f;
 	float CapsuleHalfHeight = MeleeAttackRange * 0.5f;
+
 	DrawDebugCapsule(GetWorld(), CapsuleOrigin, CapsuleHalfHeight, MeleeAttackRadius, FRotationMatrix::MakeFromZ(Forward).ToQuat(), DrawColor, false, 5.0f);
 }
 
+// 근접 공격 애니메이션 몽타주 재생 함수
 void ATTCharacterPolice::PlayMeleeAttackMontage()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -137,6 +165,7 @@ void ATTCharacterPolice::PlayMeleeAttackMontage()
 	}
 }
 
+// 네트워크 복제 설정 함수
 void ATTCharacterPolice::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -144,6 +173,7 @@ void ATTCharacterPolice::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	DOREPLIFETIME(ThisClass, bCanAttack);
 }
 
+// bCanAttack 변수 변경시 호출되는 함수
 void ATTCharacterPolice::OnRep_CanAttack()
 {
 	if(bCanAttack == true)
@@ -156,31 +186,69 @@ void ATTCharacterPolice::OnRep_CanAttack()
 	}
 }
 
+// 모든 클라이언트에서 근접 공격 애니메이션 재생 및 공격 쿨타임 시작
 void ATTCharacterPolice::MulticastRPCMeleeAttack_Implementation()
 {
-	if(HasAuthority() == true)
+	if(HasAuthority() == false && IsLocallyControlled() == false)
 	{
-		bCanAttack = false;
+		PlayMeleeAttackMontage();
+	}
+}
 
+// 서버 RPCMeleeAttack 유효성 검사 함수
+bool ATTCharacterPolice::ServerRPCMeleeAttack_Validate(float InStartMeleeAttackTime)
+{
+	if(LastStartMeleeAttackTime == 0.0f)
+	{
+		// 최초 공격의 경우 무조건 허용
+		return true;
+	}
+
+	// 밀리 공격 방지: 이전 공격 기준으로 너무 빠르게 공격 시도했는지 체크
+	return (MeleeAttackMontagePlayTime - 0.1f) < (InStartMeleeAttackTime - LastStartMeleeAttackTime);
+}
+
+// 서버 RPCMeleeAttack 구현 함수
+void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation(float InStartMeleeAttackTime)
+{
+	// 서버딜레이 = 현재서버시간 - 공격입력이들어왔을때서버시간
+	MeleeAttackTimeDifference = GetWorld()->GetTimeSeconds() - InStartMeleeAttackTime;
+	// Clamp로 0 ~ 근접 공격 몽타주 재생시간 사이로 제한
+	MeleeAttackTimeDifference = FMath::Clamp(MeleeAttackTimeDifference, 0.f, MeleeAttackMontagePlayTime);
+
+	if(KINDA_SMALL_NUMBER < MeleeAttackMontagePlayTime - MeleeAttackTimeDifference)
+	{
+
+		bCanAttack = false;
 		OnRep_CanAttack();
 
-		FTimerHandle Handle;
-		GetWorld()->GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([&]()
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
 											   {
 												   bCanAttack = true;
 												   OnRep_CanAttack();
-											   }), MeleeAttackMontagePlayTime, false);
+											   }), MeleeAttackMontagePlayTime - MeleeAttackTimeDifference, false, -1.f);
 	}
 
+	LastStartMeleeAttackTime = InStartMeleeAttackTime;
 	PlayMeleeAttackMontage();
-}
 
-bool ATTCharacterPolice::ServerRPCMeleeAttack_Validate()
-{
-	return true;
-}
-
-void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation()
-{
 	MulticastRPCMeleeAttack();
+}
+
+// 서버 RPCPerformMeleeHit 유효성 검사 함수
+bool ATTCharacterPolice::ServerRPCPerformMeleeHit_Validate(ACharacter* InDamagedCharacters, float InCheckTime)
+{
+	return MinAllowedTimeForMeleeAttack < (InCheckTime - LastStartMeleeAttackTime);
+}
+
+// 서버 RPCPerformMeleeHit 구현 함수
+void ATTCharacterPolice::ServerRPCPerformMeleeHit_Implementation(ACharacter* InDamagedCharacters, float InCheckTime)
+{
+	if(IsValid(InDamagedCharacters) == true)
+	{
+		const float MeleeAttackDamage = 10.f;
+		FDamageEvent DamageEvent;
+		InDamagedCharacters->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
+	}
 }
