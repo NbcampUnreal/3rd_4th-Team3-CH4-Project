@@ -35,6 +35,8 @@ private:
 	UFUNCTION()
 	void OnRep_IsDead();
 
+	void ActivateRagdoll();
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UTTBaseStatComponent* BaseStatComp; 

@@ -51,6 +51,8 @@ float ATTCharacterThief::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	{
 		// 죽음 처리
 		bIsDead = true;
+
+		ActivateRagdoll();
 	}
 
 	return ActualDamage;
@@ -66,6 +68,23 @@ void ATTCharacterThief::OnRep_IsDead()
 {
     if(bIsDead)
     {
-        UE_LOG(LogTemp, Error, TEXT("Thief is Dead"));
+		UE_LOG(LogTemp, Error, TEXT("Thief is Dead"));
+
+		ActivateRagdoll();
     }
+}
+
+void ATTCharacterThief::ActivateRagdoll()
+{
+	// 이동 및 회전 비활성화
+	GetCharacterMovement()->DisableMovement();
+	bUseControllerRotationYaw = false;
+
+	// 캡슐 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	// Ragdoll 적용
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
 }

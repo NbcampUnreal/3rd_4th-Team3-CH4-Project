@@ -6,8 +6,8 @@ ATTWeaponBase::ATTWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	SetRootComponent(WeaponMesh);
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+	SetRootComponent(WeaponMesh);
 }
 
 void ATTWeaponBase::BeginPlay()

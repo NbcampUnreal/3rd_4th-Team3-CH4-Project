@@ -12,8 +12,8 @@
 #include "GameFramework/GameStateBase.h"
 
 ATTCharacterPolice::ATTCharacterPolice():
-	bCanAttack(1),
 	MeleeAttackMontagePlayTime(0.f),
+	bCanAttack(1),
 	LastStartMeleeAttackTime(0.f),
 	MeleeAttackTimeDifference(0.f),
 	MinAllowedTimeForMeleeAttack(0.02f)
