@@ -88,6 +88,10 @@ float ATTAICharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	{
 		AICon->StopMovement();
 	}
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
 	Die();
 
