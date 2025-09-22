@@ -18,6 +18,10 @@ ATTAICharacter::ATTAICharacter()
 	AIControllerClass = ATTAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 300.0f, 0.0f);
+
 	bIsDead = false;
 }
 
