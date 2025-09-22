@@ -72,10 +72,10 @@ void UTTGameInstance::CreateRoomSession()
 		SessionSettings.NumPublicConnections = 3;   // 최대 인원	
 		SessionSettings.bShouldAdvertise = true;  // 다른 클라이언트가 이 세션을 검색할 수 있도록 공개
 		SessionSettings.bUsesPresence = true;
-		SessionSettings.bAllowJoinInProgress = false; // 게임 시작시 합류 불가
+		SessionSettings.bAllowJoinInProgress = true; // 게임 시작시 합류 불가
 		
 		// 커스텀 프로퍼티를 사용하여 이 세션을 식별할 수 있는 '꼬리표'
-		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo "), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		// 설정한 내용으로 세션 생성을 요청
 		SessionInterface->CreateSession(0, FName("My TT Game Session"), SessionSettings);
 	}
@@ -113,8 +113,6 @@ void UTTGameInstance::FindRoomSessions()
 		SessionSearch->MaxSearchResults = 10;  // 최대 10개의 결과만 검색
 		SessionSearch->bIsLanQuery = true;   // LAN 환경에서 검색
 
-		// 우리가 생성할 때 설정한 '꼬리표'와 일치하는 세션만 찾도록 조건을 추가
-		SessionSearch->QuerySettings.Set(FName("GameType"), FString("CopsAndRobbers"), EOnlineComparisonOp::Equals);
 		// 세션 찾기를 요청합니다.
 		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 	}
@@ -138,7 +136,7 @@ void UTTGameInstance::OnFindRoomSessionsComplete(bool bWasSuccessful)
 		else // 참여할 방이 없다면
 		{
 			// 새로운 방을 만듭니다.
-			CreateRoomSession();
+			UE_LOG(LogTemp, Warning, TEXT("Auto-join failed: No sessions found. Please refresh the server list."));
 		}
 	}
 	else // 단순 '새로고침'이었다면
@@ -263,14 +261,6 @@ void UTTGameInstance::OnDestroyRoomSessionComplete(FName SessionName, bool bWasS
 				UKismetSystemLibrary::QuitGame(GetWorld(), PlayerController, EQuitPreference::Quit, true);
 			}
 		}
-		else // 그렇지 않다면 그냥 방에서 나가는 경우 메인 메뉴로 이동
-		{
-			APlayerController* PlayerController = GetFirstLocalPlayerController();
-			if (PlayerController)
-			{
-				PlayerController->ClientTravel("/Game/TT/Maps/OutGameUI/MainMenu_Map", ETravelType::TRAVEL_Absolute);
-			}
-		}
 	}
 	else
 	{
@@ -290,5 +280,70 @@ void UTTGameInstance::JoinFoundSession(int32 SessionIndex)
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Tried to join an invalid session index."));
+	}
+}
+
+IOnlineSessionPtr UTTGameInstance::GetSessionInterface()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		return Subsystem->GetSessionInterface();
+	}
+	return nullptr;
+}
+
+void UTTGameInstance::LeaveSession()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		IOnlineSessionPtr LocalSessionInterface = Subsystem->GetSessionInterface();
+		if (LocalSessionInterface.IsValid())
+		{
+			// 델리게이트가 아직 바인딩되지 않았다면 바인딩
+			OnDestroySessionCompleteDelegateHandle = LocalSessionInterface->AddOnDestroySessionCompleteDelegate_Handle(FOnDestroySessionCompleteDelegate::CreateUObject(this, &UTTGameInstance::OnDestroySessionComplete));
+
+			if (!LocalSessionInterface->DestroySession("My TT Game Session"))
+			{
+				// 파괴 요청 자체가 실패한 경우 (예: 세션 인터페이스가 바쁨)
+				// 핸들을 다시 클리어하고 UI에 실패를 알리는 등의 처리
+				LocalSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
+			}
+		}
+	}
+}
+
+void UTTGameInstance::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		IOnlineSessionPtr LocalSessionInterface = Subsystem->GetSessionInterface();
+		if (LocalSessionInterface.IsValid())
+		{
+			// 사용했던 델리게이트 핸들 정리
+			LocalSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegateHandle);
+		}
+	}
+	// 세션 파괴에 성공했다면, 
+	if (bWasSuccessful)
+	{
+		UWorld* World = GetWorld();
+		if (World == nullptr) return;
+
+		if (World)
+		{
+			for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
+			{
+
+				APlayerController* PC = Iterator->Get();
+				if (PC)
+				{
+					PC->ClientTravel("/Game/TT/Maps/OutGameUI/MainMenu_Map", ETravelType::TRAVEL_Absolute);
+				}
+			}
+			CreateRoomSession();
+		}
 	}
 }

@@ -1,6 +1,7 @@
 #include "Game/TTGameMode.h"
 #include "Game/TTGameState.h"
 #include "Game/TTPlayerState.h"
+#include "OutGameUI/TTGameInstance.h"
 #include "Character/TTPlayerController.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -312,10 +313,22 @@ void ATTGameMode::EndGame(ETeam Winner)
 void ATTGameMode::ReturnToLobby()
 {
 	UWorld* World = GetWorld();
+	if (World == nullptr) return;
+
 	if (World)
 	{
-		// 세션을 파괴하고 모든 플레이어를 메인 메뉴 맵으로 보냄
-		// bSeamless (심리스 여부)는 false로 설정하여 로딩 화면이 뜨도록 합니다.
-		World->ServerTravel("/Game/TT/Maps/OutGameUI/MainMenu_Map", false, false);
+		for (FConstPlayerControllerIterator Iterator = World->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		{
+			
+			APlayerController* PC = Iterator->Get();
+			if (PC)
+			{
+				UTTGameInstance* GameInstance = Cast<UTTGameInstance>(GetGameInstance());
+				if (GameInstance)
+				{
+					GameInstance->LeaveSession();
+				}
+			}
+		}
 	}
 }

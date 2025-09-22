@@ -67,7 +67,9 @@ public:
 	// 모든 레벨에서 접근할 수 있도록 플레이어 이름을 저장할 변수
 	UPROPERTY(BlueprintReadWrite)
 	FString PlayerName;
-	
+
+	UFUNCTION(BlueprintCallable)
+	void LeaveSession();
 private:
 	
 	//세션 생성이 완료되었을 때 엔진이 자동으로 호출할 함수 (델리게이트 콜백)
@@ -93,5 +95,13 @@ private:
 
 	// '빠른 참가' (자동 참여)를 시도 중인지 여부를 기억하는 변수
 	bool bIsTryingToAutoJoin = false;
+
+	IOnlineSessionPtr GetSessionInterface();
+
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+	FDelegateHandle OnDestroySessionCompleteDelegateHandle;
+
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
 };
 
