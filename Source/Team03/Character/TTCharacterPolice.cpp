@@ -127,7 +127,6 @@ float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 	if(BaseStatComp && DamageAmount > 0)
 	{
 		BaseStatComp->ApplyDamage(DamageAmount);
-		UE_LOG(LogTemp, Error, TEXT("Police Current HP: %f"), BaseStatComp->GetCurrentHP());
 	}
 
 	// 캐릭터의 체력이 0 이하이고 아직 죽지 않은 상태일때
@@ -194,11 +193,7 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 		// 아무도 맞추지 못했을 때 자기 자신에게 데미지를 입히는 부분
 		if(!bIsHitDetected)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Not Hit Detected!"));
-
-			FDamageEvent DamageEvent;
-			this->TakeDamage(33.4f, DamageEvent, GetController(), this);
-			
+			ServerRPCApplySelfDamage(33.4f);
 		}
 
 		FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
@@ -253,11 +248,9 @@ void ATTCharacterPolice::OnRep_CanAttack()
 // bIsDead 변수 변경시 호출되는 함수
 void ATTCharacterPolice::OnRep_IsDead()
 {
-	UE_LOG(LogTemp, Error, TEXT("OnRep_IsDead Call"));
+	// 경찰 캐릭터가 죽은 경우
 	if(bIsDead)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Police is Dead"));
-
 		ActivateRagdoll();
 	}
 }
@@ -284,7 +277,7 @@ bool ATTCharacterPolice::ServerRPCMeleeAttack_Validate(float InStartMeleeAttackT
 	return (MeleeAttackMontagePlayTime - 0.1f) < (InStartMeleeAttackTime - LastStartMeleeAttackTime);
 }
 
-// 서버 RPCMeleeAttack 구현 함수 (서버 딜레이를 고려한 공격 속도 설정 함수)
+// 서버 (서버 딜레이를 고려한 공격 속도 설정 함수)
 void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation(float InStartMeleeAttackTime)
 {
 	// 서버딜레이 = 현재서버시간 - 공격입력이들어왔을때서버시간
@@ -318,7 +311,7 @@ bool ATTCharacterPolice::ServerRPCPerformMeleeHit_Validate(ACharacter* InDamaged
 	return MinAllowedTimeForMeleeAttack < (InCheckTime - LastStartMeleeAttackTime);
 }
 
-// 서버 RPCPerformMeleeHit 구현 함수 (특정 캐릭터에게 데미지를 입히는 함수)
+// 서버 (특정 캐릭터에게 데미지를 입히는 함수)
 void ATTCharacterPolice::ServerRPCPerformMeleeHit_Implementation(ACharacter* InDamagedCharacters, float InCheckTime)
 {
 	if(IsValid(InDamagedCharacters) == true)
@@ -327,4 +320,11 @@ void ATTCharacterPolice::ServerRPCPerformMeleeHit_Implementation(ACharacter* InD
 		FDamageEvent DamageEvent;
 		InDamagedCharacters->TakeDamage(MeleeAttackDamage, DamageEvent, GetController(), this);
 	}
+}
+
+// 서버 (본인에게 데미지를 입히는 패널티 함수)
+void ATTCharacterPolice::ServerRPCApplySelfDamage_Implementation(float DamageAmount)
+{
+	FDamageEvent DamageEvent;
+	TakeDamage(DamageAmount, DamageEvent, GetController(), this);
 }

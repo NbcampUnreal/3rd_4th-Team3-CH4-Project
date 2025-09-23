@@ -80,8 +80,6 @@ void ATTCharacterThief::OnRep_IsDead()
 {
     if(bIsDead)
     {
-		UE_LOG(LogTemp, Error, TEXT("Thief is Dead"));
-
 		ActivateRagdoll();
     }
 }

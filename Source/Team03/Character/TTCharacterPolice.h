@@ -106,6 +106,9 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRPCPerformMeleeHit(ACharacter* InDamagedCharacters, float InCheckTime);
 
+	UFUNCTION(Server, Reliable)
+	void ServerRPCApplySelfDamage(float DamageAmount);
+
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_CanAttack)
 	uint8 bCanAttack : 1;

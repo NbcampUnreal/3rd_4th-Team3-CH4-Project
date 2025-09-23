@@ -18,8 +18,6 @@ float UTTBaseStatComponent::ApplyDamage(float InDamage)
 
 	SetCurrentHP(PreviousHP - ActualDamage);
 
-	UE_LOG(LogTemp, Error, TEXT("%f"), GetCurrentHP());
-
     return ActualDamage;
 }
 
