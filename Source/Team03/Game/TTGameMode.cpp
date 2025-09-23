@@ -1,6 +1,7 @@
 #include "Game/TTGameMode.h"
 #include "Game/TTGameState.h"
 #include "Game/TTPlayerState.h"
+#include "Character/TTCharacterThief.h"
 #include "OutGameUI/TTGameInstance.h"
 #include "Character/TTPlayerController.h"
 #include "TimerManager.h"
@@ -268,10 +269,17 @@ void ATTGameMode::OnThiefCaught()
 	for (TObjectPtr<APlayerState> PS : TTGameState->PlayerArray)
 	{
 		ATTPlayerState* TTPlayerState = Cast<ATTPlayerState>(PS);
-		// 아직 '도둑' 팀이고 '죽지 않은' 상태의 플레이어 수를 체크 (지금은 IsDead 같은 상태가 없으므로 팀만 체크)
+
+		// 도둑 팀이면서 아직 죽지않은 상태의 플레이어 수를 체크
 		if (TTPlayerState && TTPlayerState->Team == ETeam::Thief)
 		{
-			ThievesRemaining++;
+			ATTCharacterThief* ThiefPawn = Cast<ATTCharacterThief>(TTPlayerState->GetPawn());
+
+			// 캐릭터가 존재하고, bIsDead가 false일 때만 살아있는 것으로 간주합니다.
+			if (ThiefPawn && ThiefPawn->IsDead() == false)
+			{
+				ThievesRemaining++;
+			}
 		}
 	}
 

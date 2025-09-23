@@ -28,6 +28,9 @@ public:
 		AActor* DamageCauser)
 		override;
 
+	// bIsDead Getter 함수 추가
+	bool IsDead() const { return bIsDead; }
+
 private:
 	UFUNCTION()
 	void OnRep_SelectMesh();

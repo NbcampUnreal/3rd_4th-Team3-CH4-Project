@@ -2,6 +2,7 @@
 
 #include "Character/TTCharacterThief.h"
 #include "Character/DataAsset/TTCharacterThiefData.h"
+#include "Game/TTGameMode.h"
 #include "Component/TTBaseStatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -53,6 +54,17 @@ float ATTCharacterThief::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 		bIsDead = true;
 
 		ActivateRagdoll();
+
+		if (HasAuthority())
+		{
+			// 현재 월드의 게임모드 가져오기
+			ATTGameMode* GameMode = GetWorld()->GetAuthGameMode<ATTGameMode>();
+			if (GameMode)
+			{
+				// 게임모드에 OnThiefCaught 함수 호출 (잡힌 도둑 체크)
+				GameMode->OnThiefCaught();
+			}
+		}
 	}
 
 	return ActualDamage;
