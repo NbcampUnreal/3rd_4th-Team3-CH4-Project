@@ -10,7 +10,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Input/TTBaseCharacterInput.h"
 #include "Net/UnrealNetwork.h"
-#include "Weapon/TTWeaponBase.h"
 
 ATTCharacterBase::ATTCharacterBase()
 {
@@ -65,21 +64,6 @@ void ATTCharacterBase::BeginPlay()
 		if(IsValid(SubSystem))
 		{
 			SubSystem->AddMappingContext(BaseCharcterIMC, 0);
-		}
-	}
-
-	if(DefaultWeaponClass)
-	{
-		// 기본무기를 현재무기에 스폰
-		CurrentWeapon = GetWorld()->SpawnActor<ATTWeaponBase>(DefaultWeaponClass);
-
-		if(CurrentWeapon)
-		{
-			CurrentWeapon->AttachToComponent(
-				GetMesh(),
-				FAttachmentTransformRules::SnapToTargetIncludingScale,
-				FName("MeleeWeapon")
-			);
 		}
 	}
 }

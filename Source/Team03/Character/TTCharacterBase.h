@@ -93,14 +93,4 @@ protected:
 	bool bIsSprinting;
 
 #pragma endregion
-
-#pragma region Weapon
-
-	UPROPERTY(EditDefaultsOnly, Category="Weapon")
-	TSubclassOf<ATTWeaponBase> DefaultWeaponClass;
-
-	UPROPERTY(VisibleAnywhere, Category="Weapon")
-	ATTWeaponBase* CurrentWeapon;
-
-#pragma endregion
 };

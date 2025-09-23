@@ -29,7 +29,7 @@ public:
 		override;
 
 	// bIsDead Getter 함수 추가
-	bool IsDead() const { return bIsDead; }
+	uint8 IsDead() const { return bIsDead; }
 
 private:
 	UFUNCTION()
@@ -40,12 +40,13 @@ private:
 
 	void ActivateRagdoll();
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
+	uint8 bIsDead;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UTTBaseStatComponent* BaseStatComp; 
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
-	uint8 bIsDead;
 
 private:
 	UPROPERTY(EditAnywhere, Category="DataAsset")

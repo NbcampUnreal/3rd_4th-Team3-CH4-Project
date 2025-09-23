@@ -10,19 +10,26 @@
 #include "Components/CapsuleComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameStateBase.h"
+#include "Weapon/TTWeaponBase.h"
+#include "Component/TTBaseStatComponent.h"
 
 ATTCharacterPolice::ATTCharacterPolice():
 	MeleeAttackMontagePlayTime(0.f),
 	bCanAttack(1),
+	bIsDead(0),
 	LastStartMeleeAttackTime(0.f),
 	MeleeAttackTimeDifference(0.f),
 	MinAllowedTimeForMeleeAttack(0.02f)
 {
+	bReplicates = true;
+
     // 경찰 캐릭터 무브먼트 관련 수치 조정
     BaseWalkSpeed = 500;
     BaseSprintSpeed = 800;
 
     GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+
+	BaseStatComp = CreateDefaultSubobject<UTTBaseStatComponent>(TEXT("BaseStatComp"));
 }
 
 void ATTCharacterPolice::BeginPlay()
@@ -38,6 +45,21 @@ void ATTCharacterPolice::BeginPlay()
 		{
 			// 경찰 IMC 1번 슬롯 연결
 			SubSystem->AddMappingContext(PoliceCharacterIMC, 1);
+		}
+	}
+
+	if(DefaultWeaponClass)
+	{
+		// 기본무기를 현재무기에 스폰
+		CurrentWeapon = GetWorld()->SpawnActor<ATTWeaponBase>(DefaultWeaponClass);
+
+		if(CurrentWeapon)
+		{
+			CurrentWeapon->AttachToComponent(
+				GetMesh(),
+				FAttachmentTransformRules::SnapToTargetIncludingScale,
+				FName("MeleeWeapon")
+			);
 		}
 	}
 
@@ -68,6 +90,22 @@ float ATTCharacterPolice::GetSprintWalkSpeed() const
     return BaseSprintSpeed;
 }
 
+// Ragdoll 활성화 함수
+void ATTCharacterPolice::ActivateRagdoll()
+{
+	// 이동 및 회전 비활성화
+	GetCharacterMovement()->DisableMovement();
+	bUseControllerRotationYaw = false;
+
+	// 캡슐 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	// Ragdoll 적용
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
+}
+
 void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 {
 	if(bCanAttack && !GetCharacterMovement()->IsFalling())
@@ -82,11 +120,26 @@ void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
 	}
 }
 
+// 데미지 처리 함수
 float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	UKismetSystemLibrary::PrintString(GetWorld(), FString::Printf(TEXT("TakeDamage: %f"), DamageAmount), true, true, FLinearColor::Green, 5.f);
 
-	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if(BaseStatComp && DamageAmount > 0)
+	{
+		BaseStatComp->ApplyDamage(DamageAmount);
+		UE_LOG(LogTemp, Error, TEXT("Police Current HP: %f"), BaseStatComp->GetCurrentHP());
+	}
+
+	// 캐릭터의 체력이 0 이하이고 아직 죽지 않은 상태일때
+	if(BaseStatComp->GetCurrentHP() <= KINDA_SMALL_NUMBER && !bIsDead)
+	{
+		// 죽음 처리
+		bIsDead = 1;
+
+		ActivateRagdoll();
+	}
+
+	return DamageAmount;
 }
 
 // 근접 공격 히트 체크 함수
@@ -138,6 +191,16 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 			}
 		}
 
+		// 아무도 맞추지 못했을 때 자기 자신에게 데미지를 입히는 부분
+		if(!bIsHitDetected)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Not Hit Detected!"));
+
+			FDamageEvent DamageEvent;
+			this->TakeDamage(33.4f, DamageEvent, GetController(), this);
+			
+		}
+
 		FColor DrawColor = bIsHitDetected ? FColor::Green : FColor::Red;
 		DrawDebugMeleeAttack(DrawColor, Start, End, Forward);
 	}
@@ -171,6 +234,7 @@ void ATTCharacterPolice::GetLifetimeReplicatedProps(TArray<class FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, bCanAttack);
+	DOREPLIFETIME(ThisClass, bIsDead);
 }
 
 // bCanAttack 변수 변경시 호출되는 함수
@@ -183,6 +247,18 @@ void ATTCharacterPolice::OnRep_CanAttack()
 	else
 	{
 		GetCharacterMovement()->SetMovementMode(MOVE_None);
+	}
+}
+
+// bIsDead 변수 변경시 호출되는 함수
+void ATTCharacterPolice::OnRep_IsDead()
+{
+	UE_LOG(LogTemp, Error, TEXT("OnRep_IsDead Call"));
+	if(bIsDead)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Police is Dead"));
+
+		ActivateRagdoll();
 	}
 }
 
@@ -208,7 +284,7 @@ bool ATTCharacterPolice::ServerRPCMeleeAttack_Validate(float InStartMeleeAttackT
 	return (MeleeAttackMontagePlayTime - 0.1f) < (InStartMeleeAttackTime - LastStartMeleeAttackTime);
 }
 
-// 서버 RPCMeleeAttack 구현 함수
+// 서버 RPCMeleeAttack 구현 함수 (서버 딜레이를 고려한 공격 속도 설정 함수)
 void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation(float InStartMeleeAttackTime)
 {
 	// 서버딜레이 = 현재서버시간 - 공격입력이들어왔을때서버시간
@@ -242,7 +318,7 @@ bool ATTCharacterPolice::ServerRPCPerformMeleeHit_Validate(ACharacter* InDamaged
 	return MinAllowedTimeForMeleeAttack < (InCheckTime - LastStartMeleeAttackTime);
 }
 
-// 서버 RPCPerformMeleeHit 구현 함수
+// 서버 RPCPerformMeleeHit 구현 함수 (특정 캐릭터에게 데미지를 입히는 함수)
 void ATTCharacterPolice::ServerRPCPerformMeleeHit_Implementation(ACharacter* InDamagedCharacters, float InCheckTime)
 {
 	if(IsValid(InDamagedCharacters) == true)

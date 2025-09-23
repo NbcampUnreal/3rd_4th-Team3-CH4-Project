@@ -8,6 +8,7 @@
 
 class UTTPoliceInput;
 class UAnimMontage;
+class UTTBaseStatComponent;
 
 UCLASS()
 class TEAM03_API ATTCharacterPolice : public ATTCharacterBase
@@ -27,6 +28,25 @@ protected:
 	virtual float GetDefaultWalkSpeed() const override;
 
 	virtual float GetSprintWalkSpeed() const override;
+
+private:
+	void ActivateRagdoll();
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	UTTBaseStatComponent* BaseStatComp; 
+
+#pragma endregion
+
+#pragma region Weapon
+
+private:
+
+	UPROPERTY(EditDefaultsOnly, Category="Weapon")
+	TSubclassOf<ATTWeaponBase> DefaultWeaponClass;
+
+	UPROPERTY(VisibleAnywhere, Category="Weapon")
+	ATTWeaponBase* CurrentWeapon;
 
 #pragma endregion
 
@@ -74,6 +94,9 @@ private:
 	UFUNCTION()
 	void OnRep_CanAttack();
 
+	UFUNCTION()
+	void OnRep_IsDead();
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRPCMeleeAttack(float InStartMeleeAttackTime);
 
@@ -86,6 +109,9 @@ private:
 protected:
 	UPROPERTY(ReplicatedUsing=OnRep_CanAttack)
 	uint8 bCanAttack : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
+	uint8 bIsDead;
 
 	// 지난 근접 공격 시작 시간
 	float LastStartMeleeAttackTime;
