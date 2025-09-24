@@ -2,6 +2,8 @@
 
 #include "Character/TTCharacterThief.h"
 #include "Character/DataAsset/TTCharacterThiefData.h"
+#include "Character/TTPlayerController.h"
+#include "Character/TTSpectatorPawn.h"
 #include "Game/TTGameMode.h"
 #include "Component/TTBaseStatComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -52,6 +54,22 @@ float ATTCharacterThief::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 	{
 		// 죽음 처리
 		bIsDead = true;
+
+		// Spectator Pawn으로 변경하는 부분
+		if(ATTPlayerController* PC = Cast<ATTPlayerController>(GetController()))
+		{
+			// Spectator Pawn 생성
+			ATTSpectatorPawn* SpectatorPawn = GetWorld()->SpawnActor<ATTSpectatorPawn>(
+				ATTSpectatorPawn::StaticClass(),
+				GetActorLocation(),
+				GetActorRotation()
+			);
+
+			if(SpectatorPawn)
+			{
+				PC->Possess(SpectatorPawn);
+			}
+		}
 
 		ActivateRagdoll();
 
