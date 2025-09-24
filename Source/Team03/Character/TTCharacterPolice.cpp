@@ -292,11 +292,19 @@ void ATTCharacterPolice::ServerRPCMeleeAttack_Implementation(float InStartMeleeA
 		OnRep_CanAttack();
 
 		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([&]()
-											   {
-												   bCanAttack = true;
-												   OnRep_CanAttack();
-											   }), MeleeAttackMontagePlayTime - MeleeAttackTimeDifference, false, -1.f);
+
+		GetWorld()->GetTimerManager().SetTimer(
+			TimerHandle,
+			// CreateLambda를 통해 람다를 타이머 델리게이트로 변환
+			FTimerDelegate::CreateLambda([&]()
+			{
+				bCanAttack = true;
+				OnRep_CanAttack();
+			}),
+			MeleeAttackMontagePlayTime - MeleeAttackTimeDifference,
+			false,
+			-1.f
+		);
 	}
 
 	LastStartMeleeAttackTime = InStartMeleeAttackTime;
