@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "TTSpectatorPawn.generated.h"
 
+class ATTPlayerController;
 class UInputMappingContext;
 class UInputAction;
 
@@ -22,15 +23,16 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IMC")
+	TObjectPtr<UInputMappingContext> SpectatorIMC;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IA")
 	TObjectPtr<UInputAction> SpectatorPreViewTarget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IA")
 	TObjectPtr<UInputAction> SpectatorNextViewTarget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IMC")
-	TObjectPtr<UInputMappingContext> SpectatorIMC;
 
 private:
 	UFUNCTION()

@@ -9,6 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "EnhancedInputSubsystems.h"
 
 ATTCharacterThief::ATTCharacterThief():
 	bIsDead(0),
@@ -55,19 +56,25 @@ float ATTCharacterThief::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 		// 죽음 처리
 		bIsDead = true;
 
-		// Spectator Pawn으로 변경하는 부분
-		if(ATTPlayerController* PC = Cast<ATTPlayerController>(GetController()))
+		if(HasAuthority())
 		{
-			// Spectator Pawn 생성
-			ATTSpectatorPawn* SpectatorPawn = GetWorld()->SpawnActor<ATTSpectatorPawn>(
-				ATTSpectatorPawn::StaticClass(),
-				GetActorLocation(),
-				GetActorRotation()
-			);
-
-			if(SpectatorPawn)
+			// Spectator Pawn으로 변경하는 부분
+			if(ATTPlayerController* PC = Cast<ATTPlayerController>(GetController()))
 			{
-				PC->Possess(SpectatorPawn);
+				// Spectator Pawn 생성
+				if(SpectatorPawnClass)
+				{
+					ATTSpectatorPawn* SpectatorPawn = GetWorld()->SpawnActor<ATTSpectatorPawn>(
+						SpectatorPawnClass,
+						GetActorLocation(),
+						GetActorRotation()
+					);
+
+					if(SpectatorPawn)
+					{
+						PC->Possess(SpectatorPawn);
+					}
+				}
 			}
 		}
 
