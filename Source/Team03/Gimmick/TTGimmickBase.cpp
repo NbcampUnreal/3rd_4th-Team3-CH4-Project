@@ -36,11 +36,16 @@ void ATTGimmickBase::Tick(float DeltaTime)
 void ATTGimmickBase::OnBeginOverlap(UPrimitiveComponent*, AActor* Other, UPrimitiveComponent*, int32, bool, const FHitResult&)
 {
     if (!Other) return;
+    if (!HasAuthority()) return;            // 서버만 처리
 
-    // 서버만 효과 실행 (클라는 무시)
-    if (!HasAuthority()) return;
+    static bool bConsumed = false;          
+    if (bConsumed) return;
+    bConsumed = true;
 
-    ExecuteEffect(Other);
+    ExecuteEffect(Other);                    // 효과 적용 (속도 버프 등)
+
+    SetActorEnableCollision(false);          // 더 이상 겹치지 않게
+    Destroy();
 }
 
 void ATTGimmickBase::ExecuteEffect_Implementation(AActor* /*Activator*/)
