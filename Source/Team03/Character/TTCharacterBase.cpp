@@ -3,6 +3,7 @@
 #include "Character/TTCharacterBase.h"
 #include "Character/TTSpectatorPawn.h"
 #include "OutGameUI/TTGameUserSettings.h"
+#include "Gimmick/TTStatModifierComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -148,6 +149,19 @@ void ATTCharacterBase::Look(const FInputActionValue& Value)
 	}
 }
 
+float ATTCharacterBase::CalculateFinalSpeed(float BaseSpeed) const
+{
+	// StatModifierComponent를 찾습니다.
+	if (UTTStatModifierComponent* Comp = FindComponentByClass<UTTStatModifierComponent>())
+	{
+		// 걷기 속도에 아이템 효과(Additive/Multiplier)를 적용합니다.
+		float FinalSpeed = (BaseSpeed + Comp->GetCurrentAdditive()) * Comp->GetCurrentMultiplier();
+
+		// FinalSpeed를 Min/Max 값으로 클램프하는 로직도 추가하는 것이 좋습니다.
+		return FMath::Clamp(FinalSpeed, 100.f, 1200.f);
+	}
+	return BaseSpeed;
+}
 void ATTCharacterBase::StartSprint(const FInputActionValue& Value)
 {
 	if(GetCharacterMovement())
@@ -189,19 +203,23 @@ void ATTCharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 
 void ATTCharacterBase::OnRep_ChangeSpeed()
 {
-	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	//GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	float BaseSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	GetCharacterMovement()->MaxWalkSpeed = CalculateFinalSpeed(BaseSpeed);
 }
 
 void ATTCharacterBase::ServerStartSprint_Implementation()
 {
 	bIsSprinting = true;
-	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	//GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	GetCharacterMovement()->MaxWalkSpeed = CalculateFinalSpeed(GetSprintWalkSpeed());
 }
 
 void ATTCharacterBase::ServerStopSprint_Implementation()
 {
 	bIsSprinting = false;
-	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	//GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+	GetCharacterMovement()->MaxWalkSpeed = CalculateFinalSpeed(GetDefaultWalkSpeed());
 }
 
 void ATTCharacterBase::OnRep_IsDead()

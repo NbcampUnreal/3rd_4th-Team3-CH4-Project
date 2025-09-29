@@ -18,6 +18,9 @@ public:
 	// Sets default values for this component's properties
 	UTTStatModifierComponent();
 
+	float GetCurrentAdditive() const { return CurrentAdditive; }
+	float GetCurrentMultiplier() const { return CurrentMultiplier; }
+
 protected:
 
 	UPROPERTY()
@@ -29,10 +32,12 @@ protected:
 	UPROPERTY()
 	FTimerHandle SpeedTimer;
 
+	UPROPERTY(Replicated) 
+		float CurrentAdditive = 0.f;
 
-	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_ApplySpeedBoost(float NewSpeed);
-	void NetMulticast_ApplySpeedBoost_Implementation(float NewSpeed);
+	UPROPERTY(Replicated) 
+		float CurrentMultiplier = 1.0f;
+
 
 	void RestoreSpeed();
 

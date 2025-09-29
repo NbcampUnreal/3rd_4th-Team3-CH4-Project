@@ -5,6 +5,7 @@
 #include "Character/TTCharacterBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h" 
 
 // Sets default values for this component's properties
 UTTStatModifierComponent::UTTStatModifierComponent()
@@ -39,17 +40,13 @@ void UTTStatModifierComponent::ApplyTemporarySpeedBoost(float Additive, float Mu
 {
 	if (!GetOwner()->HasAuthority()) return;
 
-	if (!Move) return;
+	CurrentAdditive = Additive;
+	CurrentMultiplier = Multiplier;
 
-	const float Final = FMath::Clamp((BaseWalkSpeed + Additive) * Multiplier, 100.f, 1200.f);
+	// RepNotify를 통해 클라이언트에도 즉시 동기화될 것입니다.
 
-	Move->MaxWalkSpeed = Final;
-	NetMulticast_ApplySpeedBoost(Final);
-
-	
 	if (UWorld* W = GetWorld())
 	{
-		// 기존 타이머가 있다면 취소하고 새로 설정
 		W->GetTimerManager().ClearTimer(SpeedTimer);
 		W->GetTimerManager().SetTimer(
 			SpeedTimer,
@@ -61,29 +58,23 @@ void UTTStatModifierComponent::ApplyTemporarySpeedBoost(float Additive, float Mu
 	}
 }
 
-
-
-
-void UTTStatModifierComponent::NetMulticast_ApplySpeedBoost_Implementation(float NewSpeed)
-{
-	if (!Move) return;
-	Move->MaxWalkSpeed = NewSpeed;
-}
-
 void UTTStatModifierComponent::RestoreSpeed()
 {
 	if (!GetOwner()->HasAuthority()) return;
 
-	if (!Move) return;
+	CurrentAdditive = 0.f;
+	CurrentMultiplier = 1.0f;
 
-	
-	Move->MaxWalkSpeed = BaseWalkSpeed;
-	NetMulticast_ApplySpeedBoost(BaseWalkSpeed); // NetMulticast_ApplySpeedBoost 재사용
-
-	
 	if (UWorld* W = GetWorld())
 	{
 		W->GetTimerManager().ClearTimer(SpeedTimer);
 	}
-}
 
+}
+void UTTStatModifierComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTTStatModifierComponent, CurrentAdditive);
+	DOREPLIFETIME(UTTStatModifierComponent, CurrentMultiplier);
+}

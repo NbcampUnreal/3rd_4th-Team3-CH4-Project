@@ -13,6 +13,7 @@ class UTTBaseCharacterInput;
 class UInputMappingContext;
 class ATTWeaponBase;
 class ATTSpectatorPawn;
+class UTTStatModifierComponent;
 
 UCLASS()
 class TEAM03_API ATTCharacterBase : public ACharacter
@@ -80,6 +81,8 @@ protected:
 	float BaseWalkSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Movement")
 	float BaseSprintSpeed;
+
+	float CalculateFinalSpeed(float BaseSpeed) const;
 
 #pragma endregion
 
