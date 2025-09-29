@@ -29,21 +29,11 @@ public:
 		AActor* DamageCauser)
 		override;
 
-	// bIsDead Getter 함수 추가
-	uint8 IsDead() const { return bIsDead; }
-
 private:
 	UFUNCTION()
 	void OnRep_SelectMesh();
 
-	UFUNCTION()
-	void OnRep_IsDead();
-
-	void ActivateRagdoll();
-
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
-	uint8 bIsDead;
 
 	UPROPERTY(EditDefaultsOnly, Category="Spectator")
 	TSubclassOf<ATTSpectatorPawn> SpectatorPawnClass;

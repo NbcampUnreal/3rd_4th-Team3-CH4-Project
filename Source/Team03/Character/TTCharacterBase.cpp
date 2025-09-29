@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 
 ATTCharacterBase::ATTCharacterBase()
+	: bIsDead(0)
 {
 	// 초기 값 설정
 	PrimaryActorTick.bCanEverTick = false;
@@ -181,6 +182,7 @@ void ATTCharacterBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, bIsSprinting);
+	DOREPLIFETIME(ThisClass, bIsDead);
 }
 
 void ATTCharacterBase::OnRep_ChangeSpeed()
@@ -198,4 +200,27 @@ void ATTCharacterBase::ServerStopSprint_Implementation()
 {
 	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? GetSprintWalkSpeed() : GetDefaultWalkSpeed();
+}
+
+void ATTCharacterBase::OnRep_IsDead()
+{
+	if(bIsDead)
+	{
+		ActivateRagdoll();
+	}
+}
+
+void ATTCharacterBase::ActivateRagdoll()
+{
+	// 이동 및 회전 비활성화
+	GetCharacterMovement()->DisableMovement();
+	bUseControllerRotationYaw = false;
+
+	// 캡슐 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	// Ragdoll 적용
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetSimulatePhysics(true);
 }

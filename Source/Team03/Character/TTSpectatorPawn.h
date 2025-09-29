@@ -23,9 +23,21 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+private:
+	UFUNCTION()
+	void OnSpectatorPreViewTarget(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnSpectatorNextViewTarget(const FInputActionValue& Value);
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IMC")
 	TObjectPtr<UInputMappingContext> SpectatorIMC;
+
+    UPROPERTY()
+    TArray<APawn*> ViewTargets;
+
+	int32 CurrentViewTargetIndex;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IA")
@@ -34,11 +46,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IA")
 	TObjectPtr<UInputAction> SpectatorNextViewTarget;
 
-private:
-	UFUNCTION()
-	void OnSpectatorPreViewTarget(const FInputActionValue& Value);
-
-	UFUNCTION()
-	void OnSpectatorNextViewTarget(const FInputActionValue& Value);
+	void RefreshViewTargetList();
+	void SwitchToViewTarget(class APawn* TargetPawn);
 
 };

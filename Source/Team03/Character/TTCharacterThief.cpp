@@ -12,7 +12,6 @@
 #include "EnhancedInputSubsystems.h"
 
 ATTCharacterThief::ATTCharacterThief():
-	bIsDead(0),
 	Index(-1)
 {
 	bReplicates = true;
@@ -98,28 +97,4 @@ float ATTCharacterThief::TakeDamage(float DamageAmount, FDamageEvent const& Dama
 void ATTCharacterThief::OnRep_SelectMesh()
 {
 	GetMesh()->SetSkeletalMesh(ThiefMeshData->SkeltalMeshes[Index]);
-}
-
-// bIsDead 값이 변경될 때 호출되는 함수
-void ATTCharacterThief::OnRep_IsDead()
-{
-    if(bIsDead)
-    {
-		ActivateRagdoll();
-    }
-}
-
-void ATTCharacterThief::ActivateRagdoll()
-{
-	// 이동 및 회전 비활성화
-	GetCharacterMovement()->DisableMovement();
-	bUseControllerRotationYaw = false;
-
-	// 캡슐 충돌 비활성화
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
-
-	// Ragdoll 적용
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-	GetMesh()->SetSimulatePhysics(true);
 }

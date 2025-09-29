@@ -28,6 +28,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	uint8 IsDead() const { return bIsDead; }
+
 protected:
 	virtual float GetDefaultWalkSpeed() const;
 	
@@ -36,8 +38,12 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	USpringArmComponent* SprintArmComp;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Components")
 	UCameraComponent* CameraComp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
+	uint8 bIsDead;
 
 #pragma endregion
 
@@ -77,6 +83,11 @@ protected:
 #pragma region Replication
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty> &OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void OnRep_IsDead();
+
+	void ActivateRagdoll();
 
 private:
 	UFUNCTION()
