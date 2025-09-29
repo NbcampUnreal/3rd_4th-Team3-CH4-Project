@@ -7,6 +7,8 @@
 #include "TTStatModifierComponent.generated.h"
 
 
+class UCharacterMovementComponent;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class TEAM03_API UTTStatModifierComponent : public UActorComponent
 {
@@ -16,21 +18,32 @@ public:
 	// Sets default values for this component's properties
 	UTTStatModifierComponent();
 
-	UPROPERTY() float PreviousSpeed = 600.f;
-
-	UFUNCTION(BlueprintCallable, Category = "Stat|Speed")
-	void ApplyTemporarySpeedBoost(float Additive, float Multiplier, float DurationSeconds);
-
 protected:
+
+	UPROPERTY()
+	UCharacterMovementComponent* Move;
+
+	UPROPERTY()
+	float BaseWalkSpeed = 600.f;
+
+	UPROPERTY()
+	FTimerHandle SpeedTimer;
+
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_ApplySpeedBoost(float NewSpeed);
+	void NetMulticast_ApplySpeedBoost_Implementation(float NewSpeed);
+
+	void RestoreSpeed();
+
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
 
-	UPROPERTY() float BaseWalkSpeed = 600.f;   // 원래 속도(시작 시 캐시)
-	FTimerHandle RestoreHandle;
+	void ApplyTemporarySpeedBoost(float Additive, float Multiplier, float Duration);
+	
+private:
 
-	void RestoreSpeed();
 };

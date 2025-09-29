@@ -2,6 +2,7 @@
 
 
 #include "Gimmick/TTStatModifierComponent.h"
+#include "Character/TTCharacterBase.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -12,7 +13,7 @@ UTTStatModifierComponent::UTTStatModifierComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
+	SetIsReplicatedByDefault(true);
 }
 
 
@@ -21,54 +22,68 @@ void UTTStatModifierComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (const ACharacter* C = Cast<ACharacter>(GetOwner()))
+	ACharacter* Character = Cast<ACharacter>(GetOwner());
+	if (Character)
 	{
-		if (const auto* Move = C->GetCharacterMovement())
+		Move = Character->GetCharacterMovement();
+		if (Move)
 		{
-			BaseWalkSpeed = FMath::Max(50.f, Move->MaxWalkSpeed);
+			BaseWalkSpeed = Move->MaxWalkSpeed;
 		}
 	}
+}
+
+
+
+void UTTStatModifierComponent::ApplyTemporarySpeedBoost(float Additive, float Multiplier, float Duration)
+{
+	if (!GetOwner()->HasAuthority()) return;
+
+	if (!Move) return;
+
+	const float Final = FMath::Clamp((BaseWalkSpeed + Additive) * Multiplier, 100.f, 1200.f);
+
+	Move->MaxWalkSpeed = Final;
+	NetMulticast_ApplySpeedBoost(Final);
+
 	
-}
-
-
-// Called every frame
-void UTTStatModifierComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-}
-
-void UTTStatModifierComponent::ApplyTemporarySpeedBoost(float Additive, float Multiplier, float DurationSeconds)
-{
-	if (ACharacter* C = Cast<ACharacter>(GetOwner()))
-	{
-		if (auto* Move = C->GetCharacterMovement())
-		{
-			PreviousSpeed = Move->MaxWalkSpeed; // 현재 속도 스냅샷
-			const float Final = FMath::Clamp((PreviousSpeed + Additive) * Multiplier, 100.f, 1200.f);
-			Move->MaxWalkSpeed = Final;
-		}
-	}
-
 	if (UWorld* W = GetWorld())
 	{
-		W->GetTimerManager().ClearTimer(RestoreHandle);
-		if (DurationSeconds > 0.f)
-		{
-			W->GetTimerManager().SetTimer(
-				RestoreHandle, this, &UTTStatModifierComponent::RestoreSpeed, DurationSeconds, false
-			);
-		}
+		// 기존 타이머가 있다면 취소하고 새로 설정
+		W->GetTimerManager().ClearTimer(SpeedTimer);
+		W->GetTimerManager().SetTimer(
+			SpeedTimer,
+			this,
+			&UTTStatModifierComponent::RestoreSpeed,
+			Duration,
+			false
+		);
 	}
 }
 
+
+
+
+void UTTStatModifierComponent::NetMulticast_ApplySpeedBoost_Implementation(float NewSpeed)
+{
+	if (!Move) return;
+	Move->MaxWalkSpeed = NewSpeed;
+}
 
 void UTTStatModifierComponent::RestoreSpeed()
 {
-	if (ACharacter* C = Cast<ACharacter>(GetOwner()))
-		if (auto* Move = C->GetCharacterMovement())
-		{
-			Move->MaxWalkSpeed = PreviousSpeed; // ✅ 추가: 적용 전 속도로 원복
-		}
+	if (!GetOwner()->HasAuthority()) return;
+
+	if (!Move) return;
+
+	
+	Move->MaxWalkSpeed = BaseWalkSpeed;
+	NetMulticast_ApplySpeedBoost(BaseWalkSpeed); // NetMulticast_ApplySpeedBoost 재사용
+
+	
+	if (UWorld* W = GetWorld())
+	{
+		W->GetTimerManager().ClearTimer(SpeedTimer);
+	}
 }
+

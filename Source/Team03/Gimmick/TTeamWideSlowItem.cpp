@@ -5,6 +5,7 @@
 #include "EngineUtils.h"               // FConstPawnIterator
 #include "GameFramework/PlayerState.h" // (팀 시스템 연동시 참고 용)
 #include "TimerManager.h"
+#include "GameFramework/Actor.h"
 
 ATTeamWideSlowItem::ATTeamWideSlowItem()
 {
@@ -27,14 +28,20 @@ void ATTeamWideSlowItem::ApplySlowToPawn(APawn* Target) const
 {
     if (!Target) return;
 
-    // 대상에게 스탯 컴포넌트를 찾아서(없으면 동적 생성) 감속 적용
+    // 대상에게 스탯 컴포넌트를 찾습니다.
     UTTStatModifierComponent* Comp = Target->FindComponentByClass<UTTStatModifierComponent>();
+
+    // 컴포넌트가 없으면 동적으로 생성 및 부착/초기화까지 안전하게 수행합니다.
     if (!Comp)
     {
-        Comp = NewObject<UTTStatModifierComponent>(Target);
-        Comp->RegisterComponent();
-        // 런타임 동적 추가 시에는 AddOwnedComponent가 더 적절함(소유/GC 관리)
-        Target->AddOwnedComponent(Comp);
+        Comp = Cast<UTTStatModifierComponent>(
+            Target->AddComponentByClass(
+                UTTStatModifierComponent::StaticClass(),
+                false,
+                FTransform::Identity,
+                false
+            )
+        );
     }
 
     // 감속은 Multiplier<1.0 사용. Additive를 +로 입력했다면 음수로 바꿔 적용.
