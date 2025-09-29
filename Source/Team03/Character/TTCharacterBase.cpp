@@ -1,6 +1,7 @@
 // TTCharacterBase.cpp
 
 #include "Character/TTCharacterBase.h"
+#include "Character/TTSpectatorPawn.h"
 #include "OutGameUI/TTGameUserSettings.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -10,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Input/TTBaseCharacterInput.h"
 #include "Net/UnrealNetwork.h"
+#include "EngineUtils.h"
 
 ATTCharacterBase::ATTCharacterBase()
 	: bIsDead(0)
@@ -207,6 +209,19 @@ void ATTCharacterBase::OnRep_IsDead()
 	if(bIsDead)
 	{
 		ActivateRagdoll();
+
+		UWorld* World = GetWorld();
+		if(World)
+		{
+			for(TActorIterator<ATTSpectatorPawn> It(World); It; ++It)
+			{
+				ATTSpectatorPawn* SpectatorPawn = *It;
+				if(SpectatorPawn)
+				{
+					SpectatorPawn->RefreshViewTargetList();
+				}
+			}
+		}
 	}
 }
 

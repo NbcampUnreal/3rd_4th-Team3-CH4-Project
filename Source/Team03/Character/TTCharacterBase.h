@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UTTBaseCharacterInput;
 class UInputMappingContext;
 class ATTWeaponBase;
+class ATTSpectatorPawn;
 
 UCLASS()
 class TEAM03_API ATTCharacterBase : public ACharacter
@@ -44,6 +45,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing=OnRep_IsDead)
 	uint8 bIsDead;
+
+	UPROPERTY(EditDefaultsOnly, Category="Spectator")
+	TSubclassOf<ATTSpectatorPawn> SpectatorPawnClass;
 
 #pragma endregion
 

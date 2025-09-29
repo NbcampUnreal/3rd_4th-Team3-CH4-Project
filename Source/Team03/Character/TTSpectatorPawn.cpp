@@ -7,6 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 ATTSpectatorPawn::ATTSpectatorPawn()
 {
@@ -83,7 +84,7 @@ void ATTSpectatorPawn::RefreshViewTargetList()
 	UWorld* World = GetWorld();
 	if(!World) return;
 
-	// 현재 존재하는 모든 Pawn 검색
+	// 현재 존재하는 모든 플레이어 검색
 	TArray<AActor*> FoundCharacters;
 	UGameplayStatics::GetAllActorsOfClass(World, ATTCharacterBase::StaticClass(), FoundCharacters);
 
@@ -97,14 +98,14 @@ void ATTSpectatorPawn::RefreshViewTargetList()
 	}
 }
 
-void ATTSpectatorPawn::SwitchToViewTarget(APawn* TargetPawn)
+void ATTSpectatorPawn::SwitchToViewTarget(ATTCharacterBase* TargetCharacter)
 {
-	if(!TargetPawn) return;
+	if(!TargetCharacter) return;
 
 	if(APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		PC->SetViewTargetWithBlend(
-			TargetPawn,
+			TargetCharacter,
 			0.0f
 		);
 	}

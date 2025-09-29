@@ -33,11 +33,6 @@ private:
 	UFUNCTION()
 	void OnRep_SelectMesh();
 
-public:
-
-	UPROPERTY(EditDefaultsOnly, Category="Spectator")
-	TSubclassOf<ATTSpectatorPawn> SpectatorPawnClass;
-
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UTTBaseStatComponent* BaseStatComp; 

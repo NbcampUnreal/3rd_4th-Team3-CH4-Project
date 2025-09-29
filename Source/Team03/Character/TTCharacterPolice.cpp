@@ -1,6 +1,8 @@
 // TTCharacterPolice.cpp
 
 #include "Character/TTCharacterPolice.h"
+#include "Character/TTPlayerController.h"
+#include "Character/TTSpectatorPawn.h"
 #include "Input/TTPoliceInput.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -13,7 +15,7 @@
 #include "Weapon/TTWeaponBase.h"
 #include "Component/TTBaseStatComponent.h"
 
-ATTCharacterPolice::ATTCharacterPolice():
+ATTCharacterPolice::ATTCharacterPolice() :
 	MeleeAttackMontagePlayTime(0.f),
 	bCanAttack(1),
 	LastStartMeleeAttackTime(0.f),
@@ -22,11 +24,11 @@ ATTCharacterPolice::ATTCharacterPolice():
 {
 	bReplicates = true;
 
-    // 경찰 캐릭터 무브먼트 관련 수치 조정
-    BaseWalkSpeed = 500;
-    BaseSprintSpeed = 800;
+	// 경찰 캐릭터 무브먼트 관련 수치 조정
+	BaseWalkSpeed = 500;
+	BaseSprintSpeed = 800;
 
-    GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 
 	BaseStatComp = CreateDefaultSubobject<UTTBaseStatComponent>(TEXT("BaseStatComp"));
 }
@@ -70,9 +72,9 @@ void ATTCharacterPolice::BeginPlay()
 
 void ATTCharacterPolice::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-    Super::SetupPlayerInputComponent(PlayerInputComponent);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    UEnhancedInputComponent* EnhancedInputComp = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	UEnhancedInputComponent* EnhancedInputComp = Cast<UEnhancedInputComponent>(PlayerInputComponent);
 	if(IsValid(EnhancedInputComp))
 	{
 		EnhancedInputComp->BindAction(PoliceCharacterInputData->MeleeAttack, ETriggerEvent::Started, this, &ThisClass::MeleeAttack);
@@ -81,12 +83,12 @@ void ATTCharacterPolice::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 float ATTCharacterPolice::GetDefaultWalkSpeed() const
 {
-    return BaseWalkSpeed;
+	return BaseWalkSpeed;
 }
 
 float ATTCharacterPolice::GetSprintWalkSpeed() const
 {
-    return BaseSprintSpeed;
+	return BaseSprintSpeed;
 }
 
 void ATTCharacterPolice::MeleeAttack(const FInputActionValue& Value)
@@ -112,11 +114,32 @@ float ATTCharacterPolice::TakeDamage(float DamageAmount, FDamageEvent const& Dam
 		BaseStatComp->ApplyDamage(DamageAmount);
 	}
 
-	// 캐릭터의 체력이 0 이하이고 아직 죽지 않은 상태일때
 	if(BaseStatComp->GetCurrentHP() <= KINDA_SMALL_NUMBER && !bIsDead)
 	{
 		// 죽음 처리
-		bIsDead = 1;
+		bIsDead = true;
+
+		if(HasAuthority())
+		{
+			// Spectator Pawn으로 변경하는 부분
+			if(ATTPlayerController* PC = Cast<ATTPlayerController>(GetController()))
+			{
+				// Spectator Pawn 생성
+				if(SpectatorPawnClass)
+				{
+					ATTSpectatorPawn* SpectatorPawn = GetWorld()->SpawnActor<ATTSpectatorPawn>(
+						SpectatorPawnClass,
+						GetActorLocation(),
+						GetActorRotation()
+					);
+
+					if(SpectatorPawn)
+					{
+						PC->Possess(SpectatorPawn);
+					}
+				}
+			}
+		}
 
 		ActivateRagdoll();
 	}
@@ -136,7 +159,7 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 		// 근접 공격 범위, 반경
 		const float MeleeAttackRange = 50.f;
 		const float MeleeAttackRadius = 50.f;
-		
+
 		// 근접 공격 시작, 종료 지점
 		const FVector Forward = GetActorForwardVector();
 		const FVector Start = GetActorLocation() + Forward * GetCapsuleComponent()->GetScaledCapsuleRadius();
@@ -164,7 +187,7 @@ void ATTCharacterPolice::CheckMeleeAttackHit()
 					DamagedCharacters.Add(DamagedCharacter);
 				}
 			}
-			
+
 			FDamageEvent DamageEvent;
 			for(auto const& DamagedCharacter : DamagedCharacters)
 			{

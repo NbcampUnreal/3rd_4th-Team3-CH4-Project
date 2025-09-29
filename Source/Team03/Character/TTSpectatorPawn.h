@@ -8,6 +8,7 @@
 #include "TTSpectatorPawn.generated.h"
 
 class ATTPlayerController;
+class ATTCharacterBase;
 class UInputMappingContext;
 class UInputAction;
 
@@ -23,6 +24,10 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void RefreshViewTargetList();
+
+	void SwitchToViewTarget(class ATTCharacterBase* TargetCharacter);
+
 private:
 	UFUNCTION()
 	void OnSpectatorPreViewTarget(const FInputActionValue& Value);
@@ -35,7 +40,7 @@ public:
 	TObjectPtr<UInputMappingContext> SpectatorIMC;
 
     UPROPERTY()
-    TArray<APawn*> ViewTargets;
+    TArray<ATTCharacterBase*> ViewTargets;
 
 	int32 CurrentViewTargetIndex;
 
@@ -45,8 +50,4 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "IA")
 	TObjectPtr<UInputAction> SpectatorNextViewTarget;
-
-	void RefreshViewTargetList();
-	void SwitchToViewTarget(class APawn* TargetPawn);
-
 };

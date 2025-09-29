@@ -1,9 +1,9 @@
 // TTCharacterThief.cpp
 
 #include "Character/TTCharacterThief.h"
-#include "Character/DataAsset/TTCharacterThiefData.h"
-#include "Character/TTPlayerController.h"
 #include "Character/TTSpectatorPawn.h"
+#include "Character/TTPlayerController.h"
+#include "Character/DataAsset/TTCharacterThiefData.h"
 #include "Game/TTGameMode.h"
 #include "Component/TTBaseStatComponent.h"
 #include "Components/CapsuleComponent.h"
