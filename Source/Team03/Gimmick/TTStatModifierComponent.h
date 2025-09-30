@@ -18,6 +18,7 @@ public:
 	// Sets default values for this component's properties
 	UTTStatModifierComponent();
 
+
 	float GetCurrentAdditive() const { return CurrentAdditive; }
 	float GetCurrentMultiplier() const { return CurrentMultiplier; }
 
@@ -32,10 +33,10 @@ protected:
 	UPROPERTY()
 	FTimerHandle SpeedTimer;
 
-	UPROPERTY(Replicated) 
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentModifiers)
 		float CurrentAdditive = 0.f;
 
-	UPROPERTY(Replicated) 
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentModifiers)
 		float CurrentMultiplier = 1.0f;
 
 
@@ -50,5 +51,7 @@ public:
 	void ApplyTemporarySpeedBoost(float Additive, float Multiplier, float Duration);
 	
 private:
-
+	UFUNCTION()
+	void OnRep_CurrentModifiers();
+	void UpdateMovementSpeed();
 };

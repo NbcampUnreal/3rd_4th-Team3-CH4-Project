@@ -45,6 +45,8 @@ void UTTStatModifierComponent::ApplyTemporarySpeedBoost(float Additive, float Mu
 
 	// RepNotify를 통해 클라이언트에도 즉시 동기화될 것입니다.
 
+	UpdateMovementSpeed();
+
 	if (UWorld* W = GetWorld())
 	{
 		W->GetTimerManager().ClearTimer(SpeedTimer);
@@ -65,6 +67,8 @@ void UTTStatModifierComponent::RestoreSpeed()
 	CurrentAdditive = 0.f;
 	CurrentMultiplier = 1.0f;
 
+	UpdateMovementSpeed();
+
 	if (UWorld* W = GetWorld())
 	{
 		W->GetTimerManager().ClearTimer(SpeedTimer);
@@ -77,4 +81,28 @@ void UTTStatModifierComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 
 	DOREPLIFETIME(UTTStatModifierComponent, CurrentAdditive);
 	DOREPLIFETIME(UTTStatModifierComponent, CurrentMultiplier);
+}
+
+void UTTStatModifierComponent::UpdateMovementSpeed()
+{
+	// CharacterMovementComponent 유효성 검사
+	if (!Move)
+	{
+		ACharacter* Character = Cast<ACharacter>(GetOwner());
+		if (Character)
+		{
+			Move = Character->GetCharacterMovement();
+		}
+		if (!Move) return;
+	}
+	float BaseSpeed = Move->MaxWalkSpeed;
+
+	float FinalSpeed = (BaseSpeed * CurrentMultiplier) + CurrentAdditive;
+	Move->MaxWalkSpeed = FMath::Max(0.f, FinalSpeed);
+}
+
+void UTTStatModifierComponent::OnRep_CurrentModifiers()
+{
+	// 클라이언트는 복제된 값을 받아 즉시 속도를 업데이트
+	UpdateMovementSpeed();
 }
