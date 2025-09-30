@@ -93,5 +93,21 @@ void ATTStealingtimeGimmick::StealingCompleted()
 // 이펙트 실행 (시간 절반 감소 로직)
 void ATTStealingtimeGimmick::ExecuteEffect_Implementation(AActor* Activator)
 {
-   
+    Super::ExecuteEffect_Implementation(Activator);
+
+    // GameState를 가져와 남은 시간을 직접 감소시키는 로직
+    if (ATTGameState* TTGameState = Cast<ATTGameState>(UGameplayStatics::GetGameState(GetWorld())))
+    {
+        if (HasAuthority())
+        {
+            const int32 TimeToSubtract = 60; // 1분 
+            int32 CurrentTime = TTGameState->RemainingTime;
+
+            // 1분을 감소시키고, 시간이 0 미만이 되는 것을 방지 (최소 1초는 남김)
+            int32 NewRemainingTime = FMath::Max(1, CurrentTime - TimeToSubtract);
+
+            // 서버에서 직접 RemainingTime 변수를 조작합니다.
+            TTGameState->RemainingTime = NewRemainingTime;
+        }
+    }
 }
