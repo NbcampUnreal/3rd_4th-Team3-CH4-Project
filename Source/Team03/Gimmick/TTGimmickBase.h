@@ -27,7 +27,7 @@ protected:
 	bool bConsumed = false;
 
 	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIndex, bool bFromSweep, const FHitResult& Sweep);
+	virtual void OnBeginOverlap(UPrimitiveComponent* Overlapped, AActor* Other, UPrimitiveComponent* OtherComp, int32 BodyIndex, bool bFromSweep, const FHitResult& Sweep);
 
 
 	UFUNCTION(BlueprintNativeEvent) void ExecuteEffect(AActor* Activator);
