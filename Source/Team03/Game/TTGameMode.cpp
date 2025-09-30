@@ -21,6 +21,9 @@ void ATTGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	// 플레이어 접속 로그 출력 및 세션 플레이어 수 갱신
+	UpdateSessionPlayerCount();
+
 	if (!bIsCountdownStarted && GetNumPlayers() >= NumPlayersToStartMatch)
 	{
 		// 카운트다운이 시작되었다고 표시 (다른 플레이어가 접속해도 중복 실행X)
@@ -102,6 +105,9 @@ void ATTGameMode::Logout(AController* Exiting)
 
 	// 엔진의 기본 Logout 처리를 먼저 수행합니다.
 	Super::Logout(Exiting);
+
+	// 플레이어 퇴장 로그 출력 및 세션 플레이어 수 갱신
+	UpdateSessionPlayerCount();
 
 	// 미리 확인해둔 결과에 따라 게임을 종료합니다.
 	if (bShouldEndGame)
@@ -336,6 +342,34 @@ void ATTGameMode::ReturnToLobby()
 				{
 					GameInstance->LeaveSession();
 				}
+			}
+		}
+	}
+}
+
+void ATTGameMode::UpdateSessionPlayerCount()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+	if (Subsystem)
+	{
+		IOnlineSessionPtr SessionInterface = Subsystem->GetSessionInterface();
+		if (SessionInterface.IsValid())
+		{
+			FNamedOnlineSession* NamedSession = SessionInterface->GetNamedSession(FName("My TT Game Session"));
+			if (NamedSession)
+			{
+				int32 CurrentPlayers = GetGameState<AGameStateBase>()->PlayerArray.Num();
+
+				NamedSession->SessionSettings.Set(
+					FName("CurrentPlayers"),
+					CurrentPlayers,
+					EOnlineDataAdvertisementType::ViaOnlineServiceAndPing
+				);
+
+				// 즉시 갱신
+				SessionInterface->UpdateSession(FName("My TT Game Session"), NamedSession->SessionSettings, true);
+
+				UE_LOG(LogTemp, Warning, TEXT("Session player count updated: %d"), CurrentPlayers);
 			}
 		}
 	}

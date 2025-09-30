@@ -74,4 +74,7 @@ private:
 
 	// 독립적인 랜덤 숫자 생성기
 	FRandomStream RandomStream;
+
+	// 세션 플레이어 수가 변경될 때마다 호출되는 함수
+	void UpdateSessionPlayerCount();
 };

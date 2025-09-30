@@ -73,7 +73,7 @@ void UTTGameInstance::CreateRoomSession()
 		SessionSettings.bShouldAdvertise = true;  // 다른 클라이언트가 이 세션을 검색할 수 있도록 공개
 		SessionSettings.bUsesPresence = true;
 		SessionSettings.bAllowJoinInProgress = true; 
-		
+
 		// 커스텀 프로퍼티를 사용하여 이 세션을 식별할 수 있는 '꼬리표'
 		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 		// 설정한 내용으로 세션 생성을 요청
@@ -145,26 +145,35 @@ void UTTGameInstance::OnFindRoomSessionsComplete(bool bWasSuccessful)
 		if (bWasSuccessful && SessionSearch.IsValid())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("FindSessions successful. Found %d sessions."), SessionSearch->SearchResults.Num());
-			// 1. FServerInfo를 담을 빈 배열을 생성합니다.
+			// FServerInfo를 담을 빈 배열을 생성
 			TArray<FServerInfo> ServerInfoList;
 
-			// 2. 찾은 FOnlineSessionSearchResult 배열을 순회합니다.
-			for (int32 i = 0; i < SessionSearch->SearchResults.Num(); ++i)
+			for (int32 i = 0; i < SessionSearch->SearchResults.Num(); i++)
 			{
 				const FOnlineSessionSearchResult& Result = SessionSearch->SearchResults[i];
 
-				// 3. 각 결과를 FServerInfo로 변환합니다.
 				FServerInfo Info;
-				Result.Session.SessionSettings.Get(FName("GameType"), Info.ServerName);
+				FString RoomName;
+				if (!Result.Session.SessionSettings.Get(FName("GameType"), RoomName))// 방 이름을 세션 설정에서 가져오기 시도
+				{
+					// 값이 없으면 호스트 이름이나 SessionId로 대체
+					RoomName = Result.Session.OwningUserName;
+				}
+
+				Info.ServerName = RoomName;
 				Info.MaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
-				Info.CurrentPlayers = Info.MaxPlayers - Result.Session.NumOpenPublicConnections;
+
+				// 세션에 저장된 CurrentPlayers 가져오기
+				int32 CurrentPlayers = 0;
+				Result.Session.SessionSettings.Get(FName("CurrentPlayers"), CurrentPlayers);
+				Info.CurrentPlayers = CurrentPlayers;
+
 				Info.SearchResultIndex = i;
 
-				// 4. 변환된 정보를 새 배열에 추가합니다.
 				ServerInfoList.Add(Info);
 			}
 
-			// 5. 깔끔하게 정리된 FServerInfo 배열을 UI에 방송합니다.
+			// 깔끔하게 정리된 FServerInfo 배열을 UI에 방송
 			OnServerListUpdated.Broadcast(ServerInfoList);
 		}
 		else
