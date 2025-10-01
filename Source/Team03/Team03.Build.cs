@@ -12,12 +12,10 @@ public class Team03 : ModuleRules
 		{ 
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", 
 			"UMG", "AIModule", "NavigationSystem", "GameplayTasks", 
-			"OnlineSubsystem", "OnlineSubsystemUtils", "Slate", "SlateCore"
+			"OnlineSubsystem", "OnlineSubsystemNull", "Slate", "SlateCore"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
-
-        DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
 
         PublicIncludePaths.AddRange(new string[] { "Team03" });
 

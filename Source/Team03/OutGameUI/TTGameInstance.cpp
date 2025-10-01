@@ -68,11 +68,9 @@ void UTTGameInstance::CreateRoomSession()
 		// 생성할 세션의 상세 설정
 		FOnlineSessionSettings SessionSettings;
 		SessionSettings.bIsDedicated = true;  // 데디케이트 서버 세션임을 명시
-		SessionSettings.bIsLANMatch = false;  
+		SessionSettings.bIsLANMatch = true;  
 		SessionSettings.NumPublicConnections = 3;   // 최대 인원	
 		SessionSettings.bShouldAdvertise = true;  // 다른 클라이언트가 이 세션을 검색할 수 있도록 공개
-		SessionSettings.bUsesPresence = true;
-		SessionSettings.bAllowJoinInProgress = true; 
 
 		// 커스텀 프로퍼티를 사용하여 이 세션을 식별할 수 있는 '꼬리표'
 		SessionSettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
@@ -111,9 +109,8 @@ void UTTGameInstance::FindRoomSessions()
 		// 세션 검색 조건을 설정할 객체를 생성
 		SessionSearch = MakeShareable(new FOnlineSessionSearch());
 		SessionSearch->MaxSearchResults = 10;  // 최대 10개의 결과만 검색
-		SessionSearch->bIsLanQuery = false;
+		SessionSearch->bIsLanQuery = true;
 
-		SessionSearch->QuerySettings.Set(FName("GameType"), FString("CopsAndRobbers neoman omyeon gogo"), EOnlineComparisonOp::Equals);
 		// 세션 찾기를 요청합니다.
 		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
 	}
